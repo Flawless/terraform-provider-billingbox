@@ -2,20 +2,20 @@ package provider
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
-	"github.com/hashicorp/terraform-plugin-framework/ephemeral"
-	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+
+	"terraform-provider-billingbox/internal/client"
 )
 
-var _ provider.Provider = &BillingboxProvider{}
-var _ provider.ProviderWithFunctions = &BillingboxProvider{}
-var _ provider.ProviderWithEphemeralResources = &BillingboxProvider{}
+// var _ provider.Provider = &BillingboxProvider{}
+// var _ provider.ProviderWithFunctions = &BillingboxProvider{}
+// var _ provider.ProviderWithEphemeralResources = &BillingboxProvider{}
 
 // BillingboxProvider defines the provider implementation.
 type BillingboxProvider struct {
@@ -74,6 +74,8 @@ func (p *BillingboxProvider) Schema(ctx context.Context, req provider.SchemaRequ
 }
 
 func (p *BillingboxProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
+	tflog.Info(ctx, "Configuring Billingbox client")
+
 	var data BillingboxProviderModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -82,38 +84,58 @@ func (p *BillingboxProvider) Configure(ctx context.Context, req provider.Configu
 		return
 	}
 
+	tflog.Debug(ctx, "Provider configuration", map[string]interface{}{
+		"url":       data.Url.ValueString(),
+		"client_id": data.ClientId.ValueString(),
+	})
+
 	// Configuration values are now available.
 	// if data.Endpoint.IsNull() { /* ... */ }
 
 	// Example client configuration for data sources and resources
-	client := http.DefaultClient
+	client, err := client.NewClient(&client.ClientConfig{
+		URL:          data.Url.ValueString(),
+		ClientID:     data.ClientId.ValueString(),
+		ClientSecret: data.ClientSecret.ValueString(),
+		Username:     data.Username.ValueString(),
+		Password:     data.Password.ValueString(),
+	})
+	if err != nil {
+		resp.Diagnostics.AddError("Error creating client", err.Error())
+		return
+	}
+
+	tflog.Debug(ctx, "Created Billingbox client", map[string]interface{}{
+		"url": data.Url.ValueString(),
+	})
+
 	resp.DataSourceData = client
 	resp.ResourceData = client
 }
 
 func (p *BillingboxProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
-		NewExampleResource,
+		NewUserResource,
+		NewRoleResource,
+		NewAccessPolicyResource,
 	}
 }
 
-func (p *BillingboxProvider) EphemeralResources(ctx context.Context) []func() ephemeral.EphemeralResource {
-	return []func() ephemeral.EphemeralResource{
-		NewExampleEphemeralResource,
-	}
-}
+// func (p *BillingboxProvider) EphemeralResources(ctx context.Context) []func() ephemeral.EphemeralResource {
+//	return []func() ephemeral.EphemeralResource{
+//		NewExampleEphemeralResource,
+//	}
+// }
 
 func (p *BillingboxProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
-	return []func() datasource.DataSource{
-		NewExampleDataSource,
-	}
+	return []func() datasource.DataSource{}
 }
 
-func (p *BillingboxProvider) Functions(ctx context.Context) []func() function.Function {
-	return []func() function.Function{
-		NewExampleFunction,
-	}
-}
+// func (p *BillingboxProvider) Functions(ctx context.Context) []func() function.Function {
+//	return []func() function.Function{
+//		NewExampleFunction,
+//	}
+// }
 
 func New(version string) func() provider.Provider {
 	return func() provider.Provider {
