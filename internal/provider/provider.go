@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package provider
 
 import (
@@ -16,30 +13,72 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// Ensure ScaffoldingProvider satisfies various provider interfaces.
-var _ provider.Provider = &ScaffoldingProvider{}
-var _ provider.ProviderWithFunctions = &ScaffoldingProvider{}
-var _ provider.ProviderWithEphemeralResources = &ScaffoldingProvider{}
+var _ provider.Provider = &BillingboxProvider{}
+var _ provider.ProviderWithFunctions = &BillingboxProvider{}
+var _ provider.ProviderWithEphemeralResources = &BillingboxProvider{}
 
-// ScaffoldingProvider defines the provider implementation.
-type ScaffoldingProvider struct {
+// BillingboxProvider defines the provider implementation.
+type BillingboxProvider struct {
 	// version is set to the provider version on release, "dev" when the
 	// provider is built and ran locally, and "test" when running acceptance
 	// testing.
 	version string
 }
 
-// ScaffoldingProviderModel describes the provider data model.
-type ScaffoldingProviderModel struct {
+// BillingboxProviderModel describes the provider data model.
+type BillingboxProviderModel struct {
+	// TODO implement the model for the following schema &schema.Provider{
+	//	Schema: map[string]*schema.Schema{
+	//		"url": {
+	//			Type:        schema.TypeString,
+	//			Required:    true,
+	//			DefaultFunc: schema.EnvDefaultFunc("AIDBOX_URL", nil),
+	//			Description: "The URL of the Aidbox instance",
+	//		},
+	//		"client_id": {
+	//			Type:        schema.TypeString,
+	//			Required:    true,
+	//			DefaultFunc: schema.EnvDefaultFunc("AIDBOX_CLIENT_ID", nil),
+	//			Description: "The client ID for authentication",
+	//		},
+	//		"client_secret": {
+	//			Type:        schema.TypeString,
+	//			Required:    true,
+	//			DefaultFunc: schema.EnvDefaultFunc("AIDBOX_CLIENT_SECRET", nil),
+	//			Description: "The client secret for authentication",
+	//			Sensitive:   true,
+	//		},
+	//		"username": {
+	//			Type:        schema.TypeString,
+	//			Optional:    true,
+	//			DefaultFunc: schema.EnvDefaultFunc("AIDBOX_USERNAME", nil),
+	//			Description: "The username for password grant authentication (optional)",
+	//		},
+	//		"password": {
+	//			Type:        schema.TypeString,
+	//			Optional:    true,
+	//			DefaultFunc: schema.EnvDefaultFunc("AIDBOX_PASSWORD", nil),
+	//			Description: "The password for password grant authentication (optional)",
+	//			Sensitive:   true,
+	//		},
+	//	},
+	//	ResourcesMap: map[string]*schema.Resource{
+	//		"aidbox_access_policy": aidbox.ResourceAidboxAccessPolicy(),
+	//		"aidbox_client":        aidbox.ResourceAidboxClient(),
+	//		"aidbox_role":          aidbox.ResourceAidboxRole(),
+	//		"aidbox_user":          aidbox.ResourceAidboxUser(),
+	//	},
+	//	ConfigureContextFunc: providerConfigure,
+	// }
 	Endpoint types.String `tfsdk:"endpoint"`
 }
 
-func (p *ScaffoldingProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
-	resp.TypeName = "scaffolding"
+func (p *BillingboxProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
+	resp.TypeName = "billingbox"
 	resp.Version = p.version
 }
 
-func (p *ScaffoldingProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
+func (p *BillingboxProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"endpoint": schema.StringAttribute{
@@ -50,8 +89,8 @@ func (p *ScaffoldingProvider) Schema(ctx context.Context, req provider.SchemaReq
 	}
 }
 
-func (p *ScaffoldingProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
-	var data ScaffoldingProviderModel
+func (p *BillingboxProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
+	var data BillingboxProviderModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 
@@ -68,25 +107,25 @@ func (p *ScaffoldingProvider) Configure(ctx context.Context, req provider.Config
 	resp.ResourceData = client
 }
 
-func (p *ScaffoldingProvider) Resources(ctx context.Context) []func() resource.Resource {
+func (p *BillingboxProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewExampleResource,
 	}
 }
 
-func (p *ScaffoldingProvider) EphemeralResources(ctx context.Context) []func() ephemeral.EphemeralResource {
+func (p *BillingboxProvider) EphemeralResources(ctx context.Context) []func() ephemeral.EphemeralResource {
 	return []func() ephemeral.EphemeralResource{
 		NewExampleEphemeralResource,
 	}
 }
 
-func (p *ScaffoldingProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
+func (p *BillingboxProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewExampleDataSource,
 	}
 }
 
-func (p *ScaffoldingProvider) Functions(ctx context.Context) []func() function.Function {
+func (p *BillingboxProvider) Functions(ctx context.Context) []func() function.Function {
 	return []func() function.Function{
 		NewExampleFunction,
 	}
@@ -94,7 +133,7 @@ func (p *ScaffoldingProvider) Functions(ctx context.Context) []func() function.F
 
 func New(version string) func() provider.Provider {
 	return func() provider.Provider {
-		return &ScaffoldingProvider{
+		return &BillingboxProvider{
 			version: version,
 		}
 	}
