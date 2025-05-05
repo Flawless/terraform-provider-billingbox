@@ -27,50 +27,12 @@ type BillingboxProvider struct {
 
 // BillingboxProviderModel describes the provider data model.
 type BillingboxProviderModel struct {
-	// TODO implement the model for the following schema &schema.Provider{
-	//	Schema: map[string]*schema.Schema{
-	//		"url": {
-	//			Type:        schema.TypeString,
-	//			Required:    true,
-	//			DefaultFunc: schema.EnvDefaultFunc("AIDBOX_URL", nil),
-	//			Description: "The URL of the Aidbox instance",
-	//		},
-	//		"client_id": {
-	//			Type:        schema.TypeString,
-	//			Required:    true,
-	//			DefaultFunc: schema.EnvDefaultFunc("AIDBOX_CLIENT_ID", nil),
-	//			Description: "The client ID for authentication",
-	//		},
-	//		"client_secret": {
-	//			Type:        schema.TypeString,
-	//			Required:    true,
-	//			DefaultFunc: schema.EnvDefaultFunc("AIDBOX_CLIENT_SECRET", nil),
-	//			Description: "The client secret for authentication",
-	//			Sensitive:   true,
-	//		},
-	//		"username": {
-	//			Type:        schema.TypeString,
-	//			Optional:    true,
-	//			DefaultFunc: schema.EnvDefaultFunc("AIDBOX_USERNAME", nil),
-	//			Description: "The username for password grant authentication (optional)",
-	//		},
-	//		"password": {
-	//			Type:        schema.TypeString,
-	//			Optional:    true,
-	//			DefaultFunc: schema.EnvDefaultFunc("AIDBOX_PASSWORD", nil),
-	//			Description: "The password for password grant authentication (optional)",
-	//			Sensitive:   true,
-	//		},
-	//	},
-	//	ResourcesMap: map[string]*schema.Resource{
-	//		"aidbox_access_policy": aidbox.ResourceAidboxAccessPolicy(),
-	//		"aidbox_client":        aidbox.ResourceAidboxClient(),
-	//		"aidbox_role":          aidbox.ResourceAidboxRole(),
-	//		"aidbox_user":          aidbox.ResourceAidboxUser(),
-	//	},
-	//	ConfigureContextFunc: providerConfigure,
-	// }
-	Endpoint types.String `tfsdk:"endpoint"`
+	Url          types.String `tfsdk:"url"`
+	ClientId     types.String `tfsdk:"client_id"`
+	ClientSecret types.String `tfsdk:"client_secret"`
+	Username     types.String `tfsdk:"username"`
+	Password     types.String `tfsdk:"password"`
+	Endpoint     types.String `tfsdk:"endpoint"`
 }
 
 func (p *BillingboxProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -81,6 +43,28 @@ func (p *BillingboxProvider) Metadata(ctx context.Context, req provider.Metadata
 func (p *BillingboxProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"url": schema.StringAttribute{
+				MarkdownDescription: "The URL of the Aidbox instance",
+				Required:            true,
+			},
+			"client_id": schema.StringAttribute{
+				MarkdownDescription: "The client ID for authentication",
+				Required:            true,
+			},
+			"client_secret": schema.StringAttribute{
+				MarkdownDescription: "The client secret for authentication",
+				Required:            true,
+				Sensitive:           true,
+			},
+			"username": schema.StringAttribute{
+				MarkdownDescription: "The username for password‐grant authentication (optional)",
+				Optional:            true,
+			},
+			"password": schema.StringAttribute{
+				MarkdownDescription: "The password for password‐grant authentication (optional)",
+				Optional:            true,
+				Sensitive:           true,
+			},
 			"endpoint": schema.StringAttribute{
 				MarkdownDescription: "Example provider attribute",
 				Optional:            true,
