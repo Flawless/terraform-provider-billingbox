@@ -12,10 +12,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/billingbox/internal/provider/schema_metadata"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -54,24 +54,53 @@ func (r *UserResource) Metadata(ctx context.Context, req resource.MetadataReques
 
 func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Aidbox user resource",
-
+		MarkdownDescription: "User resource",
 		Attributes: map[string]schema.Attribute{
-			"configurable_attribute": schema.StringAttribute{
-				MarkdownDescription: "Example configurable attribute",
-				Optional:            true,
-			},
-			"defaulted": schema.StringAttribute{
-				MarkdownDescription: "Example configurable attribute with default value",
-				Optional:            true,
-				Computed:            true,
-				Default:             stringdefault.StaticString("example value when not configured"),
-			},
 			"id": schema.StringAttribute{
 				Computed:            true,
-				MarkdownDescription: "Example identifier",
+				MarkdownDescription: "Unique identifier for the User",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"user_name": schema.StringAttribute{
+				Required:            true,
+				MarkdownDescription: "Unique username of the User",
+			},
+			"password": schema.StringAttribute{
+				Optional:            true,
+				Sensitive:           true,
+				MarkdownDescription: "User cleartext password",
+			},
+			"name": schema.SingleNestedAttribute{
+				Optional:            true,
+				MarkdownDescription: "Components of the user's real name",
+				Attributes: map[string]schema.Attribute{
+					"given_name": schema.StringAttribute{
+						Optional:            true,
+						MarkdownDescription: "The given name of the User",
+					},
+					"middle_name": schema.StringAttribute{
+						Optional:            true,
+						MarkdownDescription: "The middle name(s) of the User",
+					},
+					"family_name": schema.StringAttribute{
+						Optional:            true,
+						MarkdownDescription: "The family name of the User",
+					},
+					"honorific_prefix": schema.StringAttribute{
+						Optional:            true,
+						MarkdownDescription: "The honorific prefix(es) of the User",
+					},
+				},
+			},
+			// shared metadata from schema_metadata.go
+			"meta": schema.SingleNestedAttribute{
+				Computed:            true,
+				MarkdownDescription: "Server-side resource metadata",
+				Attributes:          schema_metadata.MetadataAttributes(),
+				PlanModifiers: []planmodifier.Object{
+					planmodifier.SuppressChanges(),
 				},
 			},
 		},
