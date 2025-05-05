@@ -1,3 +1,19 @@
+package provider
+
+import (
+	// Add necessary imports here, e.g.:
+	// "context"
+	// "net/http"
+	// "github.com/hashicorp/terraform-plugin-framework/resource"
+	// "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	// "github.com/hashicorp/terraform-plugin-framework/types"
+)
+
+// UserResource implements the Terraform resource for User.
+type UserResource struct {
+	// Add client or other fields as needed
+}
+
 // TODO implement user with following schema taking example resource as refference, add proper test like in example, meta schema should go to the schema_metadata.go file since it would be shared between resources, also mark metadata version_id, created_at and last_updated attributes as computed and suppress diffs for them
 // entry:
 //   - resource:
