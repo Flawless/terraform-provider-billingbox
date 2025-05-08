@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// Meta represents the metadata of a resource
+// Meta represents the metadata of a resource.
 type Meta struct {
 	VersionID   types.String `json:"versionId,omitempty" tfsdk:"version_id"`
 	CreatedAt   types.String `json:"createdAt,omitempty" tfsdk:"created_at"`

@@ -13,7 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
-// Client represents an API client
+// Client represents an API client.
 type Client struct {
 	URL          string
 	ClientID     string
