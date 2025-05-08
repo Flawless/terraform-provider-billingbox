@@ -4,22 +4,17 @@
  box
  {:zen/tags #{aidbox/system}
   :services {:admin {:zen/tags #{aidbox/service}
-                    :engine aidbox.rest-api/API}}
-
-  :test-client {:zen/tags  #{aidbox/service}
-                :client {:resourceType "Client"
-                        :id "test"
-                        :secret "test"
-                        :grant_types ["basic"]}}
-
-  :test-user {:zen/tags #{aidbox/service}
-              :resourceType "User"
-              :id "test-user"
-              :password "test"}
-
-  :test-access-policy {:zen/tags #{aidbox/service}
-                      :engine "allow"
-                      :link [{:resourceType "Client" :id "test"}]
-                      :policy {:resourceType "AccessPolicy"
-                              :id "test-policy"
-                              :engine "allow"}}}}
+                    :engine aidbox.rest-api/API}
+             :seed {:zen/tags #{aidbox/service}
+                   :engine aidbox/seed-v2
+                   :resources {:Client {:test {:resourceType "Client"
+                                             :id "test"
+                                             :secret "test"
+                                             :grant_types ["basic"]}}
+                             :User {:test-user {:resourceType "User"
+                                               :id "test-user"
+                                               :password "test"}}
+                             :AccessPolicy {:test-policy {:resourceType "AccessPolicy"
+                                                        :id "test-policy"
+                                                        :engine "allow"
+                                                        :link [{:resourceType "Client" :id "test"}]}}}}}}}
