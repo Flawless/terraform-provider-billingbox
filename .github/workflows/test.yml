@@ -28,10 +28,6 @@ jobs:
           go-version-file: 'go.mod'
           cache: true
       - run: go mod download
-      - name: Start Aidbox services
-        run: docker-compose -f test/fixtures/aidbox/docker-compose.yaml up -d
-      - name: Start Aidbox services
-        run: docker-compose -f test/fixtures/aidbox/docker-compose.yaml up -d
       - run: go build -v .
       - name: Run linters
         uses: golangci/golangci-lint-action@1481404843c368bc19ca9406f87d6e0fc97bdcfd # v7.0.0
@@ -62,6 +58,46 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    services:
+      aidboxdb:
+        image: healthsamurai/aidboxdb:17.0
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: aidbox
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      aidbox:
+        image: healthsamurai/aidboxone:latest
+        env:
+          AIDBOX_LICENSE: ${{ secrets.AIDBOX_LICENSE }}
+          AIDBOX_CLIENT_ID: test
+          AIDBOX_CLIENT_SECRET: test
+          AIDBOX_PORT: 8081
+          AIDBOX_FHIR_VERSION: 4.0.1
+          BOX_PROJECT_VERSION: 1
+          PGHOST: aidboxdb
+          PGPORT: 5432
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: aidbox
+        options: >-
+          --health-cmd "curl -f http://localhost:8081/health || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 8081:8081
+    env:
+      AIDBOX_URL: http://localhost:8081
+      AIDBOX_CLIENT_ID: test
+      AIDBOX_CLIENT_SECRET: test
+      TF_ACC: "1"
     strategy:
       fail-fast: false
       matrix:
@@ -83,7 +119,14 @@ jobs:
           terraform_version: ${{ matrix.terraform }}
           terraform_wrapper: false
       - run: go mod download
-      - env:
-          TF_ACC: "1"
+      - name: Install Postgres client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Wait for DB & Aidbox
+        run: |
+          until pg_isready -h localhost -p 5432 -U postgres; do sleep 1; done
+          until curl -s http://localhost:8081/health; do sleep 1; done
+      - name: Load DB seeds
+        run: psql postgresql://postgres:postgres@localhost:5432/aidbox -f test/fixtures/aidbox/seeds.sql
+      - name: Run acceptance tests
         run: go test -v -cover ./internal/provider/
         timeout-minutes: 10
