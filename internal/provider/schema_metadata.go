@@ -14,7 +14,7 @@ type Meta struct {
 	LastUpdated types.String `json:"lastUpdated,omitempty" tfsdk:"last_updated"`
 }
 
-// MetaAttributes returns the schema attributes for metadata
+// MetaAttributes returns the schema attributes for metadata.
 func MetaAttributes() schema.SingleNestedAttribute {
 	return schema.SingleNestedAttribute{
 		Computed:            true,

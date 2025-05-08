@@ -25,7 +25,7 @@ type Client struct {
 	authMethod   string
 }
 
-// ClientConfig holds the configuration for creating a new client
+// ClientConfig holds the configuration for creating a new client.
 type ClientConfig struct {
 	URL          string
 	ClientID     string
@@ -34,7 +34,7 @@ type ClientConfig struct {
 	Password     string
 }
 
-// NewClient creates a new API client
+// NewClient creates a new API client.
 func NewClient(config *ClientConfig) (*Client, error) {
 	client := &Client{
 		URL:          strings.TrimSuffix(config.URL, "/"),
@@ -106,12 +106,12 @@ func (c *Client) authenticateClientCredentials() error {
 	return nil
 }
 
-// setAuthHeader sets the appropriate authentication header based on the successful auth method
+// setAuthHeader sets the appropriate authentication header based on the successful auth method.
 func (c *Client) setAuthHeader(req *http.Request) {
 	req.Header.Set("Authorization", "Bearer "+c.accessToken)
 }
 
-// CreateResource creates a new resource in the API
+// CreateResource creates a new resource in the API.
 func (c *Client) CreateResource(resourceType string, data interface{}) (map[string]interface{}, error) {
 	jsonData, err := json.Marshal(data)
 	if err != nil {
@@ -176,7 +176,7 @@ func (c *Client) CreateResource(resourceType string, data interface{}) (map[stri
 	return result, nil
 }
 
-// GetResource retrieves a resource from the API
+// GetResource retrieves a resource from the API.
 func (c *Client) GetResource(resourceType string, id string) (map[string]interface{}, error) {
 	url := fmt.Sprintf("%s/%s/%s", c.URL, resourceType, id)
 	req, err := http.NewRequest("GET", url, nil)
@@ -239,7 +239,7 @@ func (c *Client) GetResource(resourceType string, id string) (map[string]interfa
 	return result, nil
 }
 
-// UpdateResource updates an existing resource in the API
+// UpdateResource updates an existing resource in the API.
 func (c *Client) UpdateResource(resourceType string, id string, data interface{}) (map[string]interface{}, error) {
 	jsonData, err := json.Marshal(data)
 	if err != nil {
@@ -274,7 +274,7 @@ func (c *Client) UpdateResource(resourceType string, id string, data interface{}
 	return result, nil
 }
 
-// DeleteResource deletes a resource from the API
+// DeleteResource deletes a resource from the API.
 func (c *Client) DeleteResource(resourceType string, id string) error {
 	url := fmt.Sprintf("%s/%s/%s", c.URL, resourceType, id)
 	req, err := http.NewRequest("DELETE", url, nil)

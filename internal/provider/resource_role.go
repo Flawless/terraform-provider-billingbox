@@ -1,12 +1,8 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package provider
 
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -22,7 +18,6 @@ import (
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
-  
 
 var _ resource.Resource = &RoleResource{}
 var _ resource.ResourceWithImportState = &RoleResource{}
@@ -152,9 +147,13 @@ func (r *RoleResource) Create(ctx context.Context, req resource.CreateRequest, r
 	}
 
 	// Update the model with the response data
-	data.ID = types.StringValue(result["id"].(string))
+	if id, ok := result["id"].(string); ok {
+		data.ID = types.StringValue(id)
+	}
 	data.ResourceType = types.StringValue("Role")
-	data.Name = types.StringValue(result["name"].(string))
+	if name, ok := result["name"].(string); ok {
+		data.Name = types.StringValue(name)
+	}
 
 	// Initialize user if not already initialized
 	if data.User == nil {
@@ -163,8 +162,12 @@ func (r *RoleResource) Create(ctx context.Context, req resource.CreateRequest, r
 
 	// Set the user field from the response
 	if user, ok := result["user"].(map[string]interface{}); ok {
-		data.User.ID = types.StringValue(user["id"].(string))
-		data.User.ResourceType = types.StringValue(user["resourceType"].(string))
+		if userID, ok := user["id"].(string); ok {
+			data.User.ID = types.StringValue(userID)
+		}
+		if resourceType, ok := user["resourceType"].(string); ok {
+			data.User.ResourceType = types.StringValue(resourceType)
+		}
 	} else {
 		// If user is not in response but was in request, preserve the request values
 		if data.User.ID.IsNull() {
@@ -176,10 +179,15 @@ func (r *RoleResource) Create(ctx context.Context, req resource.CreateRequest, r
 	}
 
 	if meta, ok := result["meta"].(map[string]interface{}); ok {
-		metaValues := map[string]attr.Value{
-			"version_id":   types.StringValue(meta["versionId"].(string)),
-			"created_at":   types.StringValue(meta["createdAt"].(string)),
-			"last_updated": types.StringValue(meta["lastUpdated"].(string)),
+		metaValues := map[string]attr.Value{}
+		if versionID, ok := meta["versionId"].(string); ok {
+			metaValues["version_id"] = types.StringValue(versionID)
+		}
+		if createdAt, ok := meta["createdAt"].(string); ok {
+			metaValues["created_at"] = types.StringValue(createdAt)
+		}
+		if lastUpdated, ok := meta["lastUpdated"].(string); ok {
+			metaValues["last_updated"] = types.StringValue(lastUpdated)
 		}
 		metaTypes := map[string]attr.Type{
 			"version_id":   types.StringType,
@@ -211,9 +219,13 @@ func (r *RoleResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	}
 
 	// Update the model with the response data
-	data.ID = types.StringValue(result["id"].(string))
+	if id, ok := result["id"].(string); ok {
+		data.ID = types.StringValue(id)
+	}
 	data.ResourceType = types.StringValue("Role")
-	data.Name = types.StringValue(result["name"].(string))
+	if name, ok := result["name"].(string); ok {
+		data.Name = types.StringValue(name)
+	}
 
 	// Initialize user if not already initialized
 	if data.User == nil {
@@ -222,8 +234,12 @@ func (r *RoleResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 
 	// Set the user field from the response
 	if user, ok := result["user"].(map[string]interface{}); ok {
-		data.User.ID = types.StringValue(user["id"].(string))
-		data.User.ResourceType = types.StringValue(user["resourceType"].(string))
+		if userID, ok := user["id"].(string); ok {
+			data.User.ID = types.StringValue(userID)
+		}
+		if resourceType, ok := user["resourceType"].(string); ok {
+			data.User.ResourceType = types.StringValue(resourceType)
+		}
 	} else {
 		// If user is not in response but exists in state, preserve the state values
 		if !data.User.ID.IsNull() {
@@ -240,10 +256,15 @@ func (r *RoleResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	}
 
 	if meta, ok := result["meta"].(map[string]interface{}); ok {
-		metaValues := map[string]attr.Value{
-			"version_id":   types.StringValue(meta["versionId"].(string)),
-			"created_at":   types.StringValue(meta["createdAt"].(string)),
-			"last_updated": types.StringValue(meta["lastUpdated"].(string)),
+		metaValues := map[string]attr.Value{}
+		if versionID, ok := meta["versionId"].(string); ok {
+			metaValues["version_id"] = types.StringValue(versionID)
+		}
+		if createdAt, ok := meta["createdAt"].(string); ok {
+			metaValues["created_at"] = types.StringValue(createdAt)
+		}
+		if lastUpdated, ok := meta["lastUpdated"].(string); ok {
+			metaValues["last_updated"] = types.StringValue(lastUpdated)
 		}
 		metaTypes := map[string]attr.Type{
 			"version_id":   types.StringType,
@@ -285,12 +306,19 @@ func (r *RoleResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	}
 
 	// Update the model with the response data
-	data.ID = types.StringValue(result["id"].(string))
+	if id, ok := result["id"].(string); ok {
+		data.ID = types.StringValue(id)
+	}
 	if meta, ok := result["meta"].(map[string]interface{}); ok {
-		metaValues := map[string]attr.Value{
-			"version_id":   types.StringValue(meta["versionId"].(string)),
-			"created_at":   types.StringValue(meta["createdAt"].(string)),
-			"last_updated": types.StringValue(meta["lastUpdated"].(string)),
+		metaValues := map[string]attr.Value{}
+		if versionID, ok := meta["versionId"].(string); ok {
+			metaValues["version_id"] = types.StringValue(versionID)
+		}
+		if createdAt, ok := meta["createdAt"].(string); ok {
+			metaValues["created_at"] = types.StringValue(createdAt)
+		}
+		if lastUpdated, ok := meta["lastUpdated"].(string); ok {
+			metaValues["last_updated"] = types.StringValue(lastUpdated)
 		}
 		metaTypes := map[string]attr.Type{
 			"version_id":   types.StringType,

@@ -13,7 +13,7 @@ type Meta struct {
 	LastUpdated string `json:"lastUpdated,omitempty"`
 }
 
-// UserName represents the name components of a user
+// UserName represents the name components of a user.
 type UserName struct {
 	GivenName       string `json:"givenName,omitempty"`
 	MiddleName      string `json:"middleName,omitempty"`
@@ -21,27 +21,27 @@ type UserName struct {
 	HonorificPrefix string `json:"honorificPrefix,omitempty"`
 }
 
-// User represents a user resource
+// User represents a user resource.
 type User struct {
 	Resource
 	Password string    `json:"password,omitempty"`
 	Name     *UserName `json:"name,omitempty"`
 }
 
-// RoleUser represents a user reference in a role
+// RoleUser represents a user reference in a role.
 type RoleUser struct {
 	ResourceType string `json:"resourceType"`
 	ID           string `json:"id"`
 }
 
-// Role represents a role resource
+// Role represents a role resource.
 type Role struct {
 	Resource
 	User *RoleUser `json:"user,omitempty"`
 	Name string    `json:"name,omitempty"`
 }
 
-// AccessPolicy represents an access policy resource
+// AccessPolicy represents an access policy resource.
 type AccessPolicy struct {
 	Resource
 	RoleName    string      `json:"roleName,omitempty"`

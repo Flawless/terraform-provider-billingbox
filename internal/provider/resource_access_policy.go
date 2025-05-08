@@ -1,14 +1,9 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package provider
 
 import (
 	"context"
 	"fmt"
 	"math/big"
-
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -24,7 +19,7 @@ import (
 	"terraform-provider-billingbox/internal/client"
 )
 
-// Custom validator for matcho attribute
+// Custom validator for matcho attribute.
 type matchoValidator struct{}
 
 func (v matchoValidator) Description(ctx context.Context) string {
@@ -68,8 +63,6 @@ func NewAccessPolicyResource() resource.Resource {
 type AccessPolicyResource struct {
 	client *client.Client
 }
-
-
 
 // AccessPolicyResourceModel describes the resource data model.
 type AccessPolicyResourceModel struct {
@@ -174,7 +167,7 @@ func (r *AccessPolicyResource) Create(ctx context.Context, req resource.CreateRe
 		RoleName:    data.RoleName.ValueString(),
 		Engine:      data.Engine.ValueString(),
 		Description: data.Description.ValueString(),
-	 }
+	}
 
 	if !data.ID.IsNull() && !data.ID.IsUnknown() {
 		accessPolicy.ID = data.ID.ValueString()
@@ -200,10 +193,15 @@ func (r *AccessPolicyResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 	if meta, ok := result["meta"].(map[string]interface{}); ok {
-		metaValues := map[string]attr.Value{
-			"version_id":   types.StringValue(meta["versionId"].(string)),
-			"created_at":   types.StringValue(meta["createdAt"].(string)),
-			"last_updated": types.StringValue(meta["lastUpdated"].(string)),
+		metaValues := map[string]attr.Value{}
+		if versionID, ok := meta["versionId"].(string); ok {
+			metaValues["version_id"] = types.StringValue(versionID)
+		}
+		if createdAt, ok := meta["createdAt"].(string); ok {
+			metaValues["created_at"] = types.StringValue(createdAt)
+		}
+		if lastUpdated, ok := meta["lastUpdated"].(string); ok {
+			metaValues["last_updated"] = types.StringValue(lastUpdated)
 		}
 		metaTypes := map[string]attr.Type{
 			"version_id":   types.StringType,
@@ -297,10 +295,15 @@ func (r *AccessPolicyResource) Read(ctx context.Context, req resource.ReadReques
 	}
 
 	if meta, ok := policy["meta"].(map[string]interface{}); ok {
-		metaValues := map[string]attr.Value{
-			"version_id":   types.StringValue(meta["versionId"].(string)),
-			"created_at":   types.StringValue(meta["createdAt"].(string)),
-			"last_updated": types.StringValue(meta["lastUpdated"].(string)),
+		metaValues := map[string]attr.Value{}
+		if versionID, ok := meta["versionId"].(string); ok {
+			metaValues["version_id"] = types.StringValue(versionID)
+		}
+		if createdAt, ok := meta["createdAt"].(string); ok {
+			metaValues["created_at"] = types.StringValue(createdAt)
+		}
+		if lastUpdated, ok := meta["lastUpdated"].(string); ok {
+			metaValues["last_updated"] = types.StringValue(lastUpdated)
 		}
 		metaTypes := map[string]attr.Type{
 			"version_id":   types.StringType,
@@ -327,14 +330,11 @@ func (r *AccessPolicyResource) Update(ctx context.Context, req resource.UpdateRe
 		RoleName:    data.RoleName.ValueString(),
 		Engine:      data.Engine.ValueString(),
 		Description: data.Description.ValueString(),
-		Matcho:      convertObjectToMap(data.Matcho.UnderlyingValue().(types.Object)),
 	}
 
-	// if !data.Matcho.IsNull() && !data.Matcho.IsUnknown() {
-	//	if objValue, ok := data.Matcho.UnderlyingValue().(types.Object); ok {
-	//		accessPolicy.Matcho = convertObjectToMap(objValue)
-	//	}
-	// }
+	if obj, ok := data.Matcho.UnderlyingValue().(types.Object); ok {
+		accessPolicy.Matcho = convertObjectToMap(obj)
+	}
 
 	// Update the access policy
 	result, err := r.client.UpdateResource("AccessPolicy", data.ID.ValueString(), accessPolicy)
@@ -344,12 +344,19 @@ func (r *AccessPolicyResource) Update(ctx context.Context, req resource.UpdateRe
 	}
 
 	// Update the model with the response data
-	data.ID = types.StringValue(result["id"].(string))
+	if id, ok := result["id"].(string); ok {
+		data.ID = types.StringValue(id)
+	}
 	if meta, ok := result["meta"].(map[string]interface{}); ok {
-		metaValues := map[string]attr.Value{
-			"version_id":   types.StringValue(meta["versionId"].(string)),
-			"created_at":   types.StringValue(meta["createdAt"].(string)),
-			"last_updated": types.StringValue(meta["lastUpdated"].(string)),
+		metaValues := map[string]attr.Value{}
+		if versionID, ok := meta["versionId"].(string); ok {
+			metaValues["version_id"] = types.StringValue(versionID)
+		}
+		if createdAt, ok := meta["createdAt"].(string); ok {
+			metaValues["created_at"] = types.StringValue(createdAt)
+		}
+		if lastUpdated, ok := meta["lastUpdated"].(string); ok {
+			metaValues["last_updated"] = types.StringValue(lastUpdated)
 		}
 		metaTypes := map[string]attr.Type{
 			"version_id":   types.StringType,
@@ -383,7 +390,7 @@ func (r *AccessPolicyResource) ImportState(ctx context.Context, req resource.Imp
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-// Add this function before the Create method
+// Add this function before the Create method.
 func convertObjectToMap(obj types.Object) map[string]interface{} {
 	result := make(map[string]interface{})
 	for k, v := range obj.Attributes() {
