@@ -57,6 +57,9 @@ jobs:
     name: Terraform Provider Acceptance Tests
     needs: build
     runs-on: ubuntu-latest
+    container:
+      image: ubuntu:22.04
+      options: --network host
     timeout-minutes: 15
     env:
       AIDBOX_URL: http://localhost:8081
@@ -88,7 +91,7 @@ jobs:
       - name: Start services
         run: |
           cd test/fixtures/aidbox
-          docker-compose up -d
+          docker compose up -d
       - name: Wait for services
         run: |
           until pg_isready -h localhost -p 5432 -U postgres; do sleep 1; done
