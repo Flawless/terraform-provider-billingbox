@@ -127,11 +127,11 @@ jobs:
         run: |
           cd test/fixtures/aidbox
           echo "=== Docker Compose Logs ===" > docker_logs.txt
-          docker-compose logs >> docker_logs.txt
+          docker compose logs >> docker_logs.txt
           echo "=== Docker Container Status ===" >> docker_logs.txt
-          docker-compose ps >> docker_logs.txt
+          docker compose ps >> docker_logs.txt
           echo "=== Docker Container Health ===" >> docker_logs.txt
-          docker-compose ps -a >> docker_logs.txt
+          docker compose ps -a >> docker_logs.txt
 
       # Upload Docker logs as artifact
       - name: Upload Docker logs
