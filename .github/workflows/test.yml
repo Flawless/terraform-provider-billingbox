@@ -103,13 +103,14 @@ jobs:
           until curl -s http://localhost:8081/health; do sleep 1; done
       - name: Verify seed file
         run: |
+          cd test/fixtures/aidbox
           # Check if seed file exists in container
-          if ! docker exec aidbox ls /aidbox-project.edn > /dev/null; then
+          if ! docker compose exec aidbox ls /aidbox-project.edn > /dev/null; then
             echo "Seed file not found in container"
             exit 1
           fi
           # Check if seed file has expected content
-          if ! docker exec aidbox grep -q "test-client" /aidbox-project.edn; then
+          if ! docker compose exec aidbox grep -q "test" /aidbox-project.edn; then
             echo "Seed file does not contain expected content"
             exit 1
           fi
