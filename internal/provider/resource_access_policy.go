@@ -170,7 +170,7 @@ func (r *AccessPolicyResource) Create(ctx context.Context, req resource.CreateRe
 		RoleName:    data.RoleName.ValueString(),
 		Engine:      data.Engine.ValueString(),
 		Description: data.Description.ValueString(),
-	}
+	 }
 
 	if !data.ID.IsNull() && !data.ID.IsUnknown() {
 		accessPolicy.ID = data.ID.ValueString()
@@ -313,9 +313,9 @@ func (r *AccessPolicyResource) Update(ctx context.Context, req resource.UpdateRe
 	}
 
 	// if !data.Matcho.IsNull() && !data.Matcho.IsUnknown() {
-	// 	if objValue, ok := data.Matcho.UnderlyingValue().(types.Object); ok {
-	// 		accessPolicy.Matcho = convertObjectToMap(objValue)
-	// 	}
+	//	if objValue, ok := data.Matcho.UnderlyingValue().(types.Object); ok {
+	//		accessPolicy.Matcho = convertObjectToMap(objValue)
+	//	}
 	// }
 
 	// Update the access policy
