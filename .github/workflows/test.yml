@@ -101,6 +101,54 @@ jobs:
         run: |
           until pg_isready -h localhost -p 5432 -U postgres; do sleep 1; done
           until curl -s http://localhost:8081/health; do sleep 1; done
+      - name: Verify seed file
+        run: |
+          # Check if seed file exists in container
+          if ! docker exec aidbox ls /aidbox-project.edn > /dev/null; then
+            echo "Seed file not found in container"
+            exit 1
+          fi
+          # Check if seed file has expected content
+          if ! docker exec aidbox grep -q "test-client" /aidbox-project.edn; then
+            echo "Seed file does not contain expected content"
+            exit 1
+          fi
+          echo "Seed file verified successfully"
       - name: Run acceptance tests
+        id: acceptance_tests
         run: go test -v -cover ./internal/provider/
         timeout-minutes: 10
+        continue-on-error: true
+
+      # Collect Docker logs if tests fail
+      - name: Collect Docker logs
+        if: steps.acceptance_tests.outcome == 'failure'
+        run: |
+          cd test/fixtures/aidbox
+          echo "=== Docker Compose Logs ===" > docker_logs.txt
+          docker-compose logs >> docker_logs.txt
+          echo "=== Docker Container Status ===" >> docker_logs.txt
+          docker-compose ps >> docker_logs.txt
+          echo "=== Docker Container Health ===" >> docker_logs.txt
+          docker-compose ps -a >> docker_logs.txt
+
+      # Upload Docker logs as artifact
+      - name: Upload Docker logs
+        if: steps.acceptance_tests.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-logs-${{ matrix.terraform }}
+          path: test/fixtures/aidbox/docker_logs.txt
+          retention-days: 5
+
+      # Stop services
+      - name: Stop services
+        if: always()
+        run: |
+          cd test/fixtures/aidbox
+          docker compose down -v
+
+      # Fail the workflow if tests failed
+      - name: Check test results
+        if: steps.acceptance_tests.outcome == 'failure'
+        run: exit 1
