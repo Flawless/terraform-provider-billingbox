@@ -21,6 +21,22 @@ import (
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
+  
+// helper to get string fields with diagnostics
+func getStringField(m map[string]interface{}, key string, diags *diag.Diagnostics, ctxMsg string) (string, bool) {
+	raw, ok := m[key]
+	if !ok {
+		diags.AddError("Missing field", fmt.Sprintf("%s: %q not found in response", ctxMsg, key))
+		return "", false
+	}
+	str, ok := raw.(string)
+	if !ok {
+		diags.AddError("Type error", fmt.Sprintf("%s: %q is not a string", ctxMsg, key))
+		return "", false
+	}
+	return str, true
+}
+
 var _ resource.Resource = &UserResource{}
 var _ resource.ResourceWithImportState = &UserResource{}
 
