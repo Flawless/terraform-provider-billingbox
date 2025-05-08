@@ -57,9 +57,6 @@ jobs:
     name: Terraform Provider Acceptance Tests
     needs: build
     runs-on: ubuntu-latest
-    container:
-      image: ubuntu:22.04
-      options: --network host
     timeout-minutes: 15
     env:
       AIDBOX_URL: http://localhost:8081
@@ -86,8 +83,10 @@ jobs:
           terraform_version: ${{ matrix.terraform }}
           terraform_wrapper: false
       - run: go mod download
-      - name: Install Postgres client
-        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client docker.io docker-compose-plugin
       - name: Start services
         run: |
           cd test/fixtures/aidbox
