@@ -101,6 +101,28 @@ jobs:
         run: |
           until pg_isready -h localhost -p 5432 -U postgres; do sleep 1; done
           until curl -s http://localhost:8081/health; do sleep 1; done
+      - name: Create test user
+        run: |
+          # Get access token using client credentials
+          TOKEN_RESPONSE=$(curl -s -X POST http://localhost:8081/auth/token \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            -d "grant_type=client_credentials&client_id=test&client_secret=test")
+          
+          ACCESS_TOKEN=$(echo $TOKEN_RESPONSE | jq -r '.access_token')
+          
+          # Create test user
+          curl -s -X PUT http://localhost:8081/User \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $ACCESS_TOKEN" \
+            -d '{
+              "resourceType": "User",
+              "id": "test-user",
+              "password": "test",
+              "name": {
+                "givenName": "Test",
+                "familyName": "User"
+              }
+            }'
       - name: Verify seed file
         run: |
           cd test/fixtures/aidbox

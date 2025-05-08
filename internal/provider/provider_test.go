@@ -23,18 +23,12 @@ func TestAccUserRoleAndAccessPolicy(t *testing.T) {
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
-			// Create a user with roles
+			// Create a user and role in a single step
 			{
-				Config: testAccUserWithRolesConfig("user1", "password1"),
+				Config: testAccUserAndRoleConfig("user1", "password1", "admin-role"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("billingbox_user.admin", "name.given_name", "Camila"),
 					resource.TestCheckResourceAttr("billingbox_user.admin", "name.family_name", "Harrington"),
-				),
-			},
-			// Create a role for the user
-			{
-				Config: testAccRoleWithUserConfig("admin-role", "user1"),
-				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("billingbox_role.admin", "name", "admin-role"),
 					resource.TestCheckResourceAttr("billingbox_role.admin", "user.id", "user1"),
 				),
@@ -75,12 +69,12 @@ func TestAccUserWithRole(t *testing.T) {
 	})
 }
 
-func testAccUserWithRolesConfig(id, password string) string {
+func testAccUserAndRoleConfig(userId, password, roleName string) string {
 	return fmt.Sprintf(`
 provider "billingbox" {
-  url           = %[3]q
-  client_id     = %[4]q
-  client_secret = %[5]q
+  url           = %[4]q
+  client_id     = %[5]q
+  client_secret = %[6]q
 }
 
 resource "billingbox_user" "admin" {
@@ -91,24 +85,14 @@ resource "billingbox_user" "admin" {
     family_name = "Harrington"
   }
 }
-`, id, password, os.Getenv("AIDBOX_URL"), os.Getenv("AIDBOX_CLIENT_ID"), os.Getenv("AIDBOX_CLIENT_SECRET"))
-}
-
-func testAccRoleWithUserConfig(roleName, userId string) string {
-	return fmt.Sprintf(`
-provider "billingbox" {
-  url           = %[3]q
-  client_id     = %[4]q
-  client_secret = %[5]q
-}
 
 resource "billingbox_role" "admin" {
-  name = %[1]q
+  name = %[3]q
   user = {
-    id = %[2]q
+    id = billingbox_user.admin.id
   }
 }
-`, roleName, userId, os.Getenv("AIDBOX_URL"), os.Getenv("AIDBOX_CLIENT_ID"), os.Getenv("AIDBOX_CLIENT_SECRET"))
+`, userId, password, roleName, os.Getenv("AIDBOX_URL"), os.Getenv("AIDBOX_CLIENT_ID"), os.Getenv("AIDBOX_CLIENT_SECRET"))
 }
 
 func testAccAccessPoliciesConfig() string {
