@@ -1,13 +1,14 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
- //nolint:forcetypeassert
 package provider
 
 import (
 	"context"
 	"fmt"
 	"math/big"
+
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -66,6 +67,22 @@ func NewAccessPolicyResource() resource.Resource {
 // AccessPolicyResource defines the resource implementation.
 type AccessPolicyResource struct {
 	client *client.Client
+}
+
+
+// helper to get string fields with diagnostics
+func getStringField(m map[string]interface{}, key string, diags *diag.Diagnostics, ctxMsg string) (string, bool) {
+	raw, ok := m[key]
+	if !ok {
+		diags.AddError("Missing field", fmt.Sprintf("%s: %q not found in response", ctxMsg, key))
+		return "", false
+	}
+	str, ok := raw.(string)
+	if !ok {
+		diags.AddError("Type error", fmt.Sprintf("%s: %q is not a string", ctxMsg, key))
+		return "", false
+	}
+	return str, true
 }
 
 // AccessPolicyResourceModel describes the resource data model.
@@ -191,7 +208,11 @@ func (r *AccessPolicyResource) Create(ctx context.Context, req resource.CreateRe
 	}
 
 	// Update the model with the response data
-	data.ID = types.StringValue(result["id"].(string))
+	if v, ok := getStringField(result, "id", &resp.Diagnostics, "CreateAccessPolicy"); ok {
+		data.ID = types.StringValue(v)
+	} else {
+		return
+	}
 	if meta, ok := result["meta"].(map[string]interface{}); ok {
 		metaValues := map[string]attr.Value{
 			"version_id":   types.StringValue(meta["versionId"].(string)),
@@ -226,10 +247,20 @@ func (r *AccessPolicyResource) Read(ctx context.Context, req resource.ReadReques
 	}
 
 	// Update the model with the response data
-	data.ID = types.StringValue(policy["id"].(string))
-	data.RoleName = types.StringValue(policy["roleName"].(string))
-	data.Engine = types.StringValue(policy["engine"].(string))
-	data.ResourceType = types.StringValue(policy["resourceType"].(string))
+	if v, ok := getStringField(policy, "id", &resp.Diagnostics, "ReadAccessPolicy"); ok {
+		data.ID = types.StringValue(v)
+	} else {
+		return
+	}
+	if v, ok := getStringField(policy, "roleName", &resp.Diagnostics, "ReadAccessPolicy"); ok {
+		data.RoleName = types.StringValue(v)
+	}
+	if v, ok := getStringField(policy, "engine", &resp.Diagnostics, "ReadAccessPolicy"); ok {
+		data.Engine = types.StringValue(v)
+	}
+	if v, ok := getStringField(policy, "resourceType", &resp.Diagnostics, "ReadAccessPolicy"); ok {
+		data.ResourceType = types.StringValue(v)
+	}
 
 	if matcho, ok := policy["matcho"]; ok {
 		// Convert matcho to a map[string]interface{}
