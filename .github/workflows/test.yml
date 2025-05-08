@@ -30,6 +30,8 @@ jobs:
       - run: go mod download
       - name: Start Aidbox services
         run: docker-compose -f test/fixtures/aidbox/docker-compose.yaml up -d
+      - name: Start Aidbox services
+        run: docker-compose -f test/fixtures/aidbox/docker-compose.yaml up -d
       - run: go build -v .
       - name: Run linters
         uses: golangci/golangci-lint-action@1481404843c368bc19ca9406f87d6e0fc97bdcfd # v7.0.0
