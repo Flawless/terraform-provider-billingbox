@@ -91,6 +91,7 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+          --volume ${{ github.workspace }}/test/fixtures/aidbox/aidbox-project.edn:/aidbox-project.edn
         ports:
           - 8081:8081
     env:
@@ -124,12 +125,6 @@ jobs:
         run: |
           until pg_isready -h localhost -p 5432 -U postgres; do sleep 1; done
           until curl -s http://localhost:8081/health; do sleep 1; done
-      - name: Copy aidbox-project.edn
-        run: |
-          mkdir -p test/fixtures/aidbox
-          cp test/fixtures/aidbox/aidbox-project.edn test/fixtures/aidbox/
-      - name: Load DB seeds
-        run: psql postgresql://postgres:postgres@localhost:5432/aidbox -f test/fixtures/aidbox/seeds.sql
       - name: Run acceptance tests
         run: go test -v -cover ./internal/provider/
         timeout-minutes: 10
