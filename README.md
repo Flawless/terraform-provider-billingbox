@@ -1,23 +1,18 @@
-# Terraform Provider Scaffolding (Terraform Plugin Framework)
+# Terraform Provider for BillingBox
 
-_This template repository is built on the [Terraform Plugin Framework](https://github.com/hashicorp/terraform-plugin-framework). The template repository built on the [Terraform Plugin SDK](https://github.com/hashicorp/terraform-plugin-sdk) can be found at [terraform-provider-scaffolding](https://github.com/hashicorp/terraform-provider-scaffolding). See [Which SDK Should I Use?](https://developer.hashicorp.com/terraform/plugin/framework-benefits) in the Terraform documentation for additional information._
+This Terraform provider enables you to manage BillingBox resources using Terraform. It provides resources for managing users, roles, and access policies in your BillingBox instance.
 
-This repository is a *template* for a [Terraform](https://www.terraform.io) provider. It is intended as a starting point for creating Terraform providers, containing:
+## Features
 
-- A resource and a data source (`internal/provider/`),
-- Examples (`examples/`) and generated documentation (`docs/`),
-- Miscellaneous meta files.
-
-These files contain boilerplate code that you will need to edit to create your own Terraform provider. Tutorials for creating Terraform providers can be found on the [HashiCorp Developer](https://developer.hashicorp.com/terraform/tutorials/providers-plugin-framework) platform. _Terraform Plugin Framework specific guides are titled accordingly._
-
-Please see the [GitHub template repository documentation](https://help.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-from-a-template) for how to create a new repository from this template on GitHub.
-
-Once you've written your provider, you'll want to [publish it on the Terraform Registry](https://developer.hashicorp.com/terraform/registry/providers/publishing) so that others can use it.
+- User Management: Create and manage users with customizable attributes
+- Role Management: Define and assign roles to users
+- Access Policy Management: Configure access policies with fine-grained permissions
 
 ## Requirements
 
 - [Terraform](https://developer.hashicorp.com/terraform/downloads) >= 1.0
 - [Go](https://golang.org/doc/install) >= 1.23
+- BillingBox instance with API access
 
 ## Building The Provider
 
@@ -45,7 +40,49 @@ Then commit the changes to `go.mod` and `go.sum`.
 
 ## Using the provider
 
-Fill this in for each provider
+To use the provider, you'll need to configure it with your BillingBox instance details. Here's an example configuration:
+
+```hcl
+provider "billingbox" {
+  url           = "https://your-billingbox-instance.com"
+  client_id     = "your-client-id"
+  client_secret = "your-client-secret"
+  username      = "optional-username"  # Optional: for password-grant authentication
+  password      = "optional-password"  # Optional: for password-grant authentication
+}
+```
+
+### Example: Creating a User with a Role
+
+```hcl
+resource "billingbox_user" "example" {
+  name = {
+    given_name  = "John"
+    family_name = "Doe"
+  }
+  password = "secure-password"
+}
+
+resource "billingbox_role" "example" {
+  name = "admin-role"
+  user = {
+    id = billingbox_user.example.id
+  }
+}
+
+resource "billingbox_access_policy" "example" {
+  role_name = "admin-role"
+  engine    = "matcho"
+  matcho = {
+    request-method = {"$enum": ["get", "post", "put", "delete", "patch"]}
+    user = {
+      data = {
+        roles = {"$contains": "Administrator"}
+      }
+    }
+  }
+}
+```
 
 ## Developing the Provider
 
@@ -62,3 +99,11 @@ In order to run the full suite of Acceptance tests, run `make testacc`.
 ```shell
 make testacc
 ```
+
+## Environment Variables for Testing
+
+The following environment variables must be set for running acceptance tests:
+
+- `AIDBOX_URL`: The URL of your BillingBox instance
+- `AIDBOX_CLIENT_ID`: Your client ID
+- `AIDBOX_CLIENT_SECRET`: Your client secret
