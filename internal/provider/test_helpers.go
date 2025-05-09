@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-// testAccProviderConfig returns a provider configuration block for testing
+// testAccProviderConfig returns a provider configuration block for testing.
 func testAccProviderConfig() string {
 	return fmt.Sprintf(`
 provider "billingbox" {
