@@ -17,6 +17,7 @@ User resource
 
 ### Optional
 
+- `email` (String) Email address of the User
 - `id` (String) Unique identifier for the User
 - `name` (Attributes) Components of the user's real name (see [below for nested schema](#nestedatt--name))
 - `password` (String, Sensitive) User cleartext password. Only set when you want to change the password.
