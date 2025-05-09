@@ -49,6 +49,11 @@ func TestAccAccessPolicyResource(t *testing.T) {
 					resource.TestCheckResourceAttr("billingbox_access_policy.test", "resource_type", "AccessPolicy"),
 				),
 			},
+			// Destroy testing
+			{
+				Config:  testAccProviderConfig(),
+				Destroy: true,
+			},
 			// Delete testing automatically occurs in TestCase
 		},
 	})

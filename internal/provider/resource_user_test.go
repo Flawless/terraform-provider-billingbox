@@ -50,6 +50,11 @@ func TestAccUserResource(t *testing.T) {
 					resource.TestCheckResourceAttr("billingbox_user.test", "resource_type", "User"),
 				),
 			},
+			// Destroy testing
+			{
+				Config:  testAccProviderConfig(),
+				Destroy: true,
+			},
 			// Delete testing automatically occurs in TestCase
 		},
 	})

@@ -46,6 +46,11 @@ func TestAccRoleResource(t *testing.T) {
 					resource.TestCheckResourceAttr("billingbox_role.test", "resource_type", "Role"),
 				),
 			},
+			// Destroy testing
+			{
+				Config:  testAccProviderConfig(),
+				Destroy: true,
+			},
 			// Delete testing automatically occurs in TestCase
 		},
 	})

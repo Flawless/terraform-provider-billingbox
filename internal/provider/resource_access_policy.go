@@ -380,7 +380,7 @@ func (r *AccessPolicyResource) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
-	err := r.client.DeleteResource("AccessPolicy", data.RoleName.ValueString())
+	err := r.client.DeleteResource("AccessPolicy", data.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Error deleting access policy", err.Error())
 		return
