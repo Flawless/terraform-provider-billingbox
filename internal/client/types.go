@@ -26,6 +26,7 @@ type User struct {
 	Resource
 	Password string    `json:"password,omitempty"`
 	Name     *UserName `json:"name,omitempty"`
+	Email    string    `json:"email,omitempty"`
 }
 
 // RoleUser represents a user reference in a role.

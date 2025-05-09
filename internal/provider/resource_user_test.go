@@ -15,21 +15,23 @@ func TestAccUserResource(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create and Read testing with auto-generated ID
 			{
-				Config: testAccUserResourceConfig("John", "Doe", ""),
+				Config: testAccUserResourceConfig("John", "Doe", "", "john.doe@example.com"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("billingbox_user.test", "name.given_name", "John"),
 					resource.TestCheckResourceAttr("billingbox_user.test", "name.family_name", "Doe"),
+					resource.TestCheckResourceAttr("billingbox_user.test", "email", "john.doe@example.com"),
 					resource.TestCheckResourceAttr("billingbox_user.test", "resource_type", "User"),
 					resource.TestCheckResourceAttrSet("billingbox_user.test", "id"),
 				),
 			},
 			// Create and Read testing with custom ID
 			{
-				Config: testAccUserResourceConfig("Jane", "Smith", "custom-id-123"),
+				Config: testAccUserResourceConfig("Jane", "Smith", "custom-id-123", "jane.smith@example.com"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("billingbox_user.test", "id", "custom-id-123"),
 					resource.TestCheckResourceAttr("billingbox_user.test", "name.given_name", "Jane"),
 					resource.TestCheckResourceAttr("billingbox_user.test", "name.family_name", "Smith"),
+					resource.TestCheckResourceAttr("billingbox_user.test", "email", "jane.smith@example.com"),
 					resource.TestCheckResourceAttr("billingbox_user.test", "resource_type", "User"),
 				),
 			},
@@ -42,11 +44,12 @@ func TestAccUserResource(t *testing.T) {
 			},
 			// Update and Read testing
 			{
-				Config: testAccUserResourceConfig("Jane", "Johnson", "custom-id-123"),
+				Config: testAccUserResourceConfig("Jane", "Johnson", "custom-id-123", "jane.johnson@example.com"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("billingbox_user.test", "id", "custom-id-123"),
 					resource.TestCheckResourceAttr("billingbox_user.test", "name.given_name", "Jane"),
 					resource.TestCheckResourceAttr("billingbox_user.test", "name.family_name", "Johnson"),
+					resource.TestCheckResourceAttr("billingbox_user.test", "email", "jane.johnson@example.com"),
 					resource.TestCheckResourceAttr("billingbox_user.test", "resource_type", "User"),
 				),
 			},
@@ -60,7 +63,7 @@ func TestAccUserResource(t *testing.T) {
 	})
 }
 
-func testAccUserResourceConfig(givenName, familyName, customID string) string {
+func testAccUserResourceConfig(givenName, familyName, customID, email string) string {
 	idConfig := ""
 	if customID != "" {
 		idConfig = fmt.Sprintf(`  id   = %q`, customID)
@@ -79,7 +82,8 @@ resource "billingbox_user" "test" {
     given_name  = %[1]q
     family_name = %[2]q
   }
+  email    = %[7]q
   password = "test-password"
 }
-`, givenName, familyName, os.Getenv("AIDBOX_URL"), os.Getenv("AIDBOX_CLIENT_ID"), os.Getenv("AIDBOX_CLIENT_SECRET"), idConfig)
+`, givenName, familyName, os.Getenv("AIDBOX_URL"), os.Getenv("AIDBOX_CLIENT_ID"), os.Getenv("AIDBOX_CLIENT_SECRET"), idConfig, email)
 }

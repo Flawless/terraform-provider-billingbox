@@ -43,6 +43,7 @@ type UserResourceModel struct {
 	ID           types.String `json:"id,omitempty" tfsdk:"id"`
 	Password     types.String `json:"password,omitempty" tfsdk:"password"`
 	Name         *UserName    `json:"name,omitempty" tfsdk:"name"`
+	Email        types.String `json:"email,omitempty" tfsdk:"email"`
 	Meta         types.Object `json:"meta,omitempty" tfsdk:"meta"`
 }
 
@@ -76,6 +77,10 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
+			},
+			"email": schema.StringAttribute{
+				Optional:            true,
+				MarkdownDescription: "Email address of the User",
 			},
 			"name": schema.SingleNestedAttribute{
 				Optional:            true,
@@ -140,6 +145,7 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 			FamilyName:      data.Name.FamilyName.ValueString(),
 			HonorificPrefix: data.Name.HonorificPrefix.ValueString(),
 		},
+		Email: data.Email.ValueString(),
 	}
 
 	// Create the user
@@ -154,6 +160,9 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 		data.ID = types.StringValue(id)
 	}
 	data.ResourceType = types.StringValue("User")
+	if email, ok := result["email"].(string); ok {
+		data.Email = types.StringValue(email)
+	}
 	if meta, ok := result["meta"].(map[string]interface{}); ok {
 		metaValues := map[string]attr.Value{}
 		if versionID, ok := meta["versionId"].(string); ok {
@@ -197,6 +206,9 @@ func (r *UserResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		data.ID = types.StringValue(id)
 	}
 	data.ResourceType = types.StringValue("User")
+	if email, ok := user["email"].(string); ok {
+		data.Email = types.StringValue(email)
+	}
 
 	// Handle name if present
 	if name, ok := user["name"].(map[string]interface{}); ok {
@@ -259,6 +271,7 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 			ResourceType: "User",
 			ID:           data.ID.ValueString(),
 		},
+		Email: data.Email.ValueString(),
 	}
 
 	// Only include password in update if it's explicitly set
@@ -287,6 +300,9 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		data.ID = types.StringValue(id)
 	}
 	data.ResourceType = types.StringValue("User")
+	if email, ok := result["email"].(string); ok {
+		data.Email = types.StringValue(email)
+	}
 
 	// Handle name if present
 	if name, ok := result["name"].(map[string]interface{}); ok {
