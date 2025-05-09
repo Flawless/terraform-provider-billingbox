@@ -62,6 +62,7 @@ jobs:
       AIDBOX_URL: http://localhost:8081
       AIDBOX_CLIENT_ID: test
       AIDBOX_CLIENT_SECRET: test
+      AIDBOX_LICENSE: ${{ secrets.AIDBOX_LICENSE }}
       TF_ACC: "1"
     strategy:
       fail-fast: false
