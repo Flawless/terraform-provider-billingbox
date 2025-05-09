@@ -33,7 +33,6 @@ builds:
 archives:
 - formats:
     - zip
-    - tar.gz
   name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
 checksum:
   extra_files:
