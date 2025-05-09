@@ -13,13 +13,22 @@ func TestAccRoleResource(t *testing.T) {
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
-			// Create and Read testing
+			// Create and Read testing with auto-generated ID
 			{
-				Config: testAccRoleResourceConfig("test-user", "test-role"),
+				Config: testAccRoleResourceConfig("test-role", ""),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("billingbox_role.test", "user.id", "test-user"),
-					resource.TestCheckResourceAttr("billingbox_role.test", "user.resource_type", "User"),
 					resource.TestCheckResourceAttr("billingbox_role.test", "name", "test-role"),
+					resource.TestCheckResourceAttr("billingbox_role.test", "resource_type", "Role"),
+					resource.TestCheckResourceAttrSet("billingbox_role.test", "id"),
+				),
+			},
+			// Create and Read testing with custom ID
+			{
+				Config: testAccRoleResourceConfig("test-role-custom", "custom-id-123"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("billingbox_role.test", "id", "custom-id-123"),
+					resource.TestCheckResourceAttr("billingbox_role.test", "name", "test-role-custom"),
+					resource.TestCheckResourceAttr("billingbox_role.test", "resource_type", "Role"),
 				),
 			},
 			// ImportState testing
@@ -30,11 +39,11 @@ func TestAccRoleResource(t *testing.T) {
 			},
 			// Update and Read testing
 			{
-				Config: testAccRoleResourceConfig("test-user", "updated-role"),
+				Config: testAccRoleResourceConfig("test-role-updated", "custom-id-123"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("billingbox_role.test", "user.id", "test-user"),
-					resource.TestCheckResourceAttr("billingbox_role.test", "user.resource_type", "User"),
-					resource.TestCheckResourceAttr("billingbox_role.test", "name", "updated-role"),
+					resource.TestCheckResourceAttr("billingbox_role.test", "id", "custom-id-123"),
+					resource.TestCheckResourceAttr("billingbox_role.test", "name", "test-role-updated"),
+					resource.TestCheckResourceAttr("billingbox_role.test", "resource_type", "Role"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase
@@ -42,19 +51,25 @@ func TestAccRoleResource(t *testing.T) {
 	})
 }
 
-func testAccRoleResourceConfig(userID, roleName string) string {
+func testAccRoleResourceConfig(name, customID string) string {
+	idConfig := ""
+	if customID != "" {
+		idConfig = fmt.Sprintf(`  id   = %q`, customID)
+	}
+
 	return fmt.Sprintf(`
 provider "billingbox" {
-  url           = %[3]q
-  client_id     = %[4]q
-  client_secret = %[5]q
+  url           = %[1]q
+  client_id     = %[2]q
+  client_secret = %[3]q
 }
 
 resource "billingbox_role" "test" {
-  name = %[1]q
+%[4]s
+  name = %[5]q
   user = {
-    id = %[2]q
+    id = "test-user"
   }
 }
-`, roleName, userID, os.Getenv("AIDBOX_URL"), os.Getenv("AIDBOX_CLIENT_ID"), os.Getenv("AIDBOX_CLIENT_SECRET"))
+`, os.Getenv("AIDBOX_URL"), os.Getenv("AIDBOX_CLIENT_ID"), os.Getenv("AIDBOX_CLIENT_SECRET"), idConfig, name)
 }

@@ -23,12 +23,12 @@ Access Policy resource
 ### Optional
 
 - `description` (String) Description of the Access Policy
+- `id` (String) Unique identifier for the Access Policy. If not set, a random ID will be generated.
 - `matcho` (Dynamic) Match object of the Access Policy. Can contain nested maps with string, number, or boolean values. Only used when engine is set to 'matcho'.
 - `resource_type` (String) Resource type of the Access Policy. Always set to 'AccessPolicy'.
 
 ### Read-Only
 
-- `id` (String) Unique identifier for the Access Policy
 - `meta` (Attributes) Server-side resource metadata (see [below for nested schema](#nestedatt--meta))
 
 <a id="nestedatt--meta"></a>

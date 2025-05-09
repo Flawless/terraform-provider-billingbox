@@ -84,8 +84,9 @@ func (r *AccessPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 		MarkdownDescription: "Access Policy resource",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
+				Optional:            true,
 				Computed:            true,
-				MarkdownDescription: "Unique identifier for the Access Policy",
+				MarkdownDescription: "Unique identifier for the Access Policy. If not set, a random ID will be generated.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},

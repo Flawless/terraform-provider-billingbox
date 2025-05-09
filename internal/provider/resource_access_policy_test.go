@@ -13,11 +13,22 @@ func TestAccAccessPolicyResource(t *testing.T) {
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
-			// Create and Read testing
+			// Create and Read testing with auto-generated ID
 			{
-				Config: testAccAccessPolicyResourceConfig("test-role", "read"),
+				Config: testAccAccessPolicyResourceConfig("test-role", "read", ""),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("billingbox_access_policy.test", "role_name", "test-role"),
+					resource.TestCheckResourceAttr("billingbox_access_policy.test", "engine", "matcho"),
+					resource.TestCheckResourceAttr("billingbox_access_policy.test", "resource_type", "AccessPolicy"),
+					resource.TestCheckResourceAttrSet("billingbox_access_policy.test", "id"),
+				),
+			},
+			// Create and Read testing with custom ID
+			{
+				Config: testAccAccessPolicyResourceConfig("test-role-custom", "read", "custom-id-123"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("billingbox_access_policy.test", "id", "custom-id-123"),
+					resource.TestCheckResourceAttr("billingbox_access_policy.test", "role_name", "test-role-custom"),
 					resource.TestCheckResourceAttr("billingbox_access_policy.test", "engine", "matcho"),
 					resource.TestCheckResourceAttr("billingbox_access_policy.test", "resource_type", "AccessPolicy"),
 				),
@@ -30,9 +41,10 @@ func TestAccAccessPolicyResource(t *testing.T) {
 			},
 			// Update and Read testing
 			{
-				Config: testAccAccessPolicyResourceConfig("test-role", "write"),
+				Config: testAccAccessPolicyResourceConfig("test-role-custom", "write", "custom-id-123"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("billingbox_access_policy.test", "role_name", "test-role"),
+					resource.TestCheckResourceAttr("billingbox_access_policy.test", "id", "custom-id-123"),
+					resource.TestCheckResourceAttr("billingbox_access_policy.test", "role_name", "test-role-custom"),
 					resource.TestCheckResourceAttr("billingbox_access_policy.test", "engine", "matcho"),
 					resource.TestCheckResourceAttr("billingbox_access_policy.test", "resource_type", "AccessPolicy"),
 				),
@@ -42,7 +54,12 @@ func TestAccAccessPolicyResource(t *testing.T) {
 	})
 }
 
-func testAccAccessPolicyResourceConfig(roleName, action string) string {
+func testAccAccessPolicyResourceConfig(roleName, action, customID string) string {
+	idConfig := ""
+	if customID != "" {
+		idConfig = fmt.Sprintf(`  id        = %q`, customID)
+	}
+
 	return fmt.Sprintf(`
 provider "billingbox" {
   url           = %[3]q
@@ -51,6 +68,7 @@ provider "billingbox" {
 }
 
 resource "billingbox_access_policy" "test" {
+%[6]s
   role_name = %[1]q
   engine    = "matcho"
   matcho = {
@@ -59,5 +77,5 @@ resource "billingbox_access_policy" "test" {
     action        = %[2]q
   }
 }
-`, roleName, action, os.Getenv("AIDBOX_URL"), os.Getenv("AIDBOX_CLIENT_ID"), os.Getenv("AIDBOX_CLIENT_SECRET"))
+`, roleName, action, os.Getenv("AIDBOX_URL"), os.Getenv("AIDBOX_CLIENT_ID"), os.Getenv("AIDBOX_CLIENT_SECRET"), idConfig)
 }
