@@ -153,11 +153,7 @@ func TestClientAuthentication(t *testing.T) {
 			} else {
 				if err != nil {
 					t.Errorf("Unexpected error: %v", err)
-				}
-				if client == nil {
-					t.Error("Client is nil but no error was returned")
-				}
-				if client.authMethod != tc.authMethod {
+				} else if client.authMethod != tc.authMethod {
 					t.Errorf("Expected auth method %s, got %s", tc.authMethod, client.authMethod)
 				}
 			}
