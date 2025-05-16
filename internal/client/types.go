@@ -1,6 +1,5 @@
 package client
 
-// Resource represents a generic resource in the API.
 type Resource struct {
 	ResourceType string `json:"resourceType,omitempty"`
 	ID           string `json:"id,omitempty"`

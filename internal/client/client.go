@@ -113,7 +113,25 @@ func (c *Client) setAuthHeader(req *http.Request) {
 
 // CreateResource creates a new resource in the API.
 func (c *Client) CreateResource(resourceType string, data interface{}) (map[string]interface{}, error) {
-	jsonData, err := json.Marshal(data)
+	// Convert data to map to check for ID
+	dataMap, ok := data.(map[string]interface{})
+	if !ok {
+		// If not a map, marshal and unmarshal to get a map
+		jsonData, err := json.Marshal(data)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling data: %w", err)
+		}
+		if err := json.Unmarshal(jsonData, &dataMap); err != nil {
+			return nil, fmt.Errorf("error unmarshaling data: %w", err)
+		}
+	}
+
+	// If the ID field is present and non-empty, ensure it's in the payload
+	if id, ok := dataMap["id"].(string); ok && id != "" {
+		dataMap["id"] = id
+	}
+
+	jsonData, err := json.Marshal(dataMap)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling data: %w", err)
 	}
