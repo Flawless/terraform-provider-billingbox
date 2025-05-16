@@ -3,6 +3,7 @@ package provider
 import (
 	"fmt"
 	"os"
+	"terraform-provider-billingbox/internal/client"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -44,6 +45,29 @@ func TestAccRoleResource(t *testing.T) {
 					resource.TestCheckResourceAttr("billingbox_role.test", "id", "custom-id-123"),
 					resource.TestCheckResourceAttr("billingbox_role.test", "name", "test-role-updated"),
 					resource.TestCheckResourceAttr("billingbox_role.test", "resource_type", "Role"),
+				),
+			},
+			// Test not-found error handling
+			{
+				PreConfig: func() {
+					client, err := client.NewClient(&client.ClientConfig{
+						URL:          os.Getenv("AIDBOX_URL"),
+						ClientID:     os.Getenv("AIDBOX_CLIENT_ID"),
+						ClientSecret: os.Getenv("AIDBOX_CLIENT_SECRET"),
+					})
+					if err != nil {
+						t.Fatalf("Failed to create client: %v", err)
+					}
+					err = client.DeleteResource("Role", "custom-id-123")
+					if err != nil {
+						t.Fatalf("Failed to delete role: %v", err)
+					}
+				},
+				Config: testAccRoleResourceConfig("test-role-updated", ""), // Let Aidbox generate a new ID
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("billingbox_role.test", "name", "test-role-updated"),
+					resource.TestCheckResourceAttr("billingbox_role.test", "resource_type", "Role"),
+					resource.TestCheckResourceAttrSet("billingbox_role.test", "id"),
 				),
 			},
 			// Destroy testing

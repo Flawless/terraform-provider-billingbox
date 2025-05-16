@@ -3,9 +3,9 @@
         "TF_ACC": "1",
         // "TF_LOG": "debug",
         "INTEGRATION_TESTS": "true",
-        "AIDBOX_URL": "http://localhost:8081",
-        "AIDBOX_CLIENT_ID": "test",
-        "AIDBOX_CLIENT_SECRET": "test"
+        "AIDBOX_URL": "http://localhost:8080",
+        "AIDBOX_CLIENT_ID": "client",
+        "AIDBOX_CLIENT_SECRET": "secret"
     },
     "go.testFlags": [
         "-v"
