@@ -212,18 +212,23 @@ func (r *RoleResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-	result, err := r.client.GetResource("Role", data.ID.ValueString())
+	role, err := r.client.GetResource("Role", data.ID.ValueString())
 	if err != nil {
+		// If the resource doesn't exist, mark it for recreation
+		if client.IsNotFoundError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("Error reading role", err.Error())
 		return
 	}
 
 	// Update the model with the response data
-	if id, ok := result["id"].(string); ok {
+	if id, ok := role["id"].(string); ok {
 		data.ID = types.StringValue(id)
 	}
 	data.ResourceType = types.StringValue("Role")
-	if name, ok := result["name"].(string); ok {
+	if name, ok := role["name"].(string); ok {
 		data.Name = types.StringValue(name)
 	}
 
@@ -233,7 +238,7 @@ func (r *RoleResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	}
 
 	// Set the user field from the response
-	if user, ok := result["user"].(map[string]interface{}); ok {
+	if user, ok := role["user"].(map[string]interface{}); ok {
 		if userID, ok := user["id"].(string); ok {
 			data.User.ID = types.StringValue(userID)
 		}
@@ -255,7 +260,7 @@ func (r *RoleResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		}
 	}
 
-	if meta, ok := result["meta"].(map[string]interface{}); ok {
+	if meta, ok := role["meta"].(map[string]interface{}); ok {
 		metaValues := map[string]attr.Value{}
 		if versionID, ok := meta["versionId"].(string); ok {
 			metaValues["version_id"] = types.StringValue(versionID)

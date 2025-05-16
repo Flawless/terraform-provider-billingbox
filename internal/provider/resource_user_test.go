@@ -3,6 +3,7 @@ package provider
 import (
 	"fmt"
 	"os"
+	"terraform-provider-billingbox/internal/client"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -44,6 +45,33 @@ func TestAccUserResource(t *testing.T) {
 			},
 			// Update and Read testing
 			{
+				Config: testAccUserResourceConfig("Jane", "Johnson", "custom-id-123", "jane.johnson@example.com"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("billingbox_user.test", "id", "custom-id-123"),
+					resource.TestCheckResourceAttr("billingbox_user.test", "name.given_name", "Jane"),
+					resource.TestCheckResourceAttr("billingbox_user.test", "name.family_name", "Johnson"),
+					resource.TestCheckResourceAttr("billingbox_user.test", "email", "jane.johnson@example.com"),
+					resource.TestCheckResourceAttr("billingbox_user.test", "resource_type", "User"),
+				),
+			},
+			// Test not-found error handling
+			{
+				PreConfig: func() {
+					// Create a client to delete the user directly
+					client, err := client.NewClient(&client.ClientConfig{
+						URL:          os.Getenv("AIDBOX_URL"),
+						ClientID:     os.Getenv("AIDBOX_CLIENT_ID"),
+						ClientSecret: os.Getenv("AIDBOX_CLIENT_SECRET"),
+					})
+					if err != nil {
+						t.Fatalf("Failed to create client: %v", err)
+					}
+					// Delete the user directly through the API
+					err = client.DeleteResource("User", "custom-id-123")
+					if err != nil {
+						t.Fatalf("Failed to delete user: %v", err)
+					}
+				},
 				Config: testAccUserResourceConfig("Jane", "Johnson", "custom-id-123", "jane.johnson@example.com"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("billingbox_user.test", "id", "custom-id-123"),

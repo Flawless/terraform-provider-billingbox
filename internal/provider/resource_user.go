@@ -197,6 +197,11 @@ func (r *UserResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 
 	user, err := r.client.GetResource("User", data.ID.ValueString())
 	if err != nil {
+		// If the resource doesn't exist, mark it for recreation
+		if client.IsNotFoundError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("Error reading user", err.Error())
 		return
 	}

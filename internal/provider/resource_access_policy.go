@@ -227,6 +227,11 @@ func (r *AccessPolicyResource) Read(ctx context.Context, req resource.ReadReques
 
 	policy, err := r.client.GetResource("AccessPolicy", data.ID.ValueString())
 	if err != nil {
+		// If the resource doesn't exist, mark it for recreation
+		if client.IsNotFoundError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("Error reading access policy", err.Error())
 		return
 	}

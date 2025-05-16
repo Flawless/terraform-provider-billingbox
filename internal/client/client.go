@@ -302,3 +302,11 @@ func (c *Client) DeleteResource(resourceType string, id string) error {
 
 	return nil
 }
+
+// IsNotFoundError checks if the error indicates that a resource was not found.
+func IsNotFoundError(err error) bool {
+	if err == nil {
+		return false
+	}
+	return strings.Contains(err.Error(), "404") || strings.Contains(err.Error(), "not found")
+}
