@@ -40,10 +40,24 @@ func NewClient(config *ClientConfig) (*Client, error) {
 		URL:          strings.TrimSuffix(config.URL, "/"),
 		ClientID:     config.ClientID,
 		ClientSecret: config.ClientSecret,
+		Username:     config.Username,
+		Password:     config.Password,
 		HTTPClient:   &http.Client{},
 	}
 
-	// Try client credentials
+	// Try resource owner grant if username and password are provided
+	if config.Username != "" && config.Password != "" {
+		err := client.authenticateResourceOwner()
+		if err == nil {
+			client.authMethod = "password"
+			return client, nil
+		}
+		tflog.Debug(context.Background(), "Resource owner authentication failed, falling back to client credentials", map[string]interface{}{
+			"error": err.Error(),
+		})
+	}
+
+	// Fall back to client credentials
 	err := client.authenticateClientCredentials()
 	if err != nil {
 		return nil, fmt.Errorf("authentication failed: %w", err)
@@ -63,6 +77,61 @@ func (c *Client) authenticateClientCredentials() error {
 	data.Set("grant_type", "client_credentials")
 	data.Set("client_id", c.ClientID)
 	data.Set("client_secret", c.ClientSecret)
+
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/auth/token", c.URL), strings.NewReader(data.Encode()))
+	if err != nil {
+		return fmt.Errorf("error creating auth request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("error making auth request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Read and log the response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("error reading auth response body: %w", err)
+	}
+
+	tflog.Debug(ctx, "Received auth response", map[string]interface{}{
+		"status_code": resp.StatusCode,
+		"body":        string(body),
+	})
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("auth request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return fmt.Errorf("error parsing auth response: %w", err)
+	}
+
+	accessToken, ok := result["access_token"].(string)
+	if !ok {
+		return fmt.Errorf("access_token not found in response")
+	}
+
+	c.accessToken = accessToken
+	return nil
+}
+
+func (c *Client) authenticateResourceOwner() error {
+	ctx := context.Background()
+	tflog.Debug(ctx, "Authenticating with resource owner credentials", map[string]interface{}{
+		"url": fmt.Sprintf("%s/auth/token", c.URL),
+	})
+
+	data := url.Values{}
+	data.Set("grant_type", "password")
+	data.Set("client_id", c.ClientID)
+	data.Set("client_secret", c.ClientSecret)
+	data.Set("username", c.Username)
+	data.Set("password", c.Password)
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/auth/token", c.URL), strings.NewReader(data.Encode()))
 	if err != nil {

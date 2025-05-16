@@ -77,10 +77,14 @@ func TestClientAuthentication(t *testing.T) {
 		t.Fatal("AIDBOX_CLIENT_SECRET environment variable is not set")
 	}
 
+	username := os.Getenv("AIDBOX_USERNAME")
+	password := os.Getenv("AIDBOX_PASSWORD")
+
 	testCases := []struct {
 		name        string
 		config      *ClientConfig
 		expectError bool
+		authMethod  string
 	}{
 		{
 			name: "Valid client credentials",
@@ -90,6 +94,7 @@ func TestClientAuthentication(t *testing.T) {
 				ClientSecret: clientSecret,
 			},
 			expectError: false,
+			authMethod:  "client_credentials",
 		},
 		{
 			name: "Invalid client credentials",
@@ -99,7 +104,43 @@ func TestClientAuthentication(t *testing.T) {
 				ClientSecret: "invalid",
 			},
 			expectError: true,
+			authMethod:  "",
 		},
+	}
+
+	// Add resource owner test cases if credentials are available
+	if username != "" && password != "" {
+		testCases = append(testCases, []struct {
+			name        string
+			config      *ClientConfig
+			expectError bool
+			authMethod  string
+		}{
+			{
+				name: "Valid resource owner credentials",
+				config: &ClientConfig{
+					URL:          url,
+					ClientID:     clientID,
+					ClientSecret: clientSecret,
+					Username:     username,
+					Password:     password,
+				},
+				expectError: false,
+				authMethod:  "password",
+			},
+			{
+				name: "Invalid resource owner credentials",
+				config: &ClientConfig{
+					URL:          url,
+					ClientID:     clientID,
+					ClientSecret: clientSecret,
+					Username:     "invalid",
+					Password:     "invalid",
+				},
+				expectError: false, // Should fall back to client credentials
+				authMethod:  "client_credentials",
+			},
+		}...)
 	}
 
 	for _, tc := range testCases {
@@ -115,6 +156,9 @@ func TestClientAuthentication(t *testing.T) {
 				}
 				if client == nil {
 					t.Error("Client is nil but no error was returned")
+				}
+				if client.authMethod != tc.authMethod {
+					t.Errorf("Expected auth method %s, got %s", tc.authMethod, client.authMethod)
 				}
 			}
 		})
