@@ -3,6 +3,7 @@ package provider
 import (
 	"fmt"
 	"os"
+	"terraform-provider-billingbox/internal/client"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -41,6 +42,30 @@ func TestAccAccessPolicyResource(t *testing.T) {
 			},
 			// Update and Read testing
 			{
+				Config: testAccAccessPolicyResourceConfig("test-role-custom", "write", "custom-id-123"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("billingbox_access_policy.test", "id", "custom-id-123"),
+					resource.TestCheckResourceAttr("billingbox_access_policy.test", "role_name", "test-role-custom"),
+					resource.TestCheckResourceAttr("billingbox_access_policy.test", "engine", "matcho"),
+					resource.TestCheckResourceAttr("billingbox_access_policy.test", "resource_type", "AccessPolicy"),
+				),
+			},
+			// Test not-found error handling
+			{
+				PreConfig: func() {
+					client, err := client.NewClient(&client.ClientConfig{
+						URL:          os.Getenv("AIDBOX_URL"),
+						ClientID:     os.Getenv("AIDBOX_CLIENT_ID"),
+						ClientSecret: os.Getenv("AIDBOX_CLIENT_SECRET"),
+					})
+					if err != nil {
+						t.Fatalf("Failed to create client: %v", err)
+					}
+					err = client.DeleteResource("AccessPolicy", "custom-id-123")
+					if err != nil {
+						t.Fatalf("Failed to delete access policy: %v", err)
+					}
+				},
 				Config: testAccAccessPolicyResourceConfig("test-role-custom", "write", "custom-id-123"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("billingbox_access_policy.test", "id", "custom-id-123"),
