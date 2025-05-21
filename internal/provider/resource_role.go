@@ -128,6 +128,7 @@ func (r *RoleResource) Create(ctx context.Context, req resource.CreateRequest, r
 	role := &client.Role{
 		Resource: client.Resource{
 			ResourceType: "Role",
+			ID:           data.ID.ValueString(),
 		},
 		Name: data.Name.ValueString(),
 	}

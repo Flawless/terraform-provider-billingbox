@@ -21,6 +21,7 @@ func TestAccRoleResource(t *testing.T) {
 					resource.TestCheckResourceAttr("billingbox_role.test", "name", "test-role"),
 					resource.TestCheckResourceAttr("billingbox_role.test", "resource_type", "Role"),
 					resource.TestCheckResourceAttrSet("billingbox_role.test", "id"),
+					resource.TestCheckResourceAttr("billingbox_role.test", "user.id", "test-user"),
 				),
 			},
 			// Create and Read testing with custom ID
@@ -30,6 +31,7 @@ func TestAccRoleResource(t *testing.T) {
 					resource.TestCheckResourceAttr("billingbox_role.test", "id", "custom-id-123"),
 					resource.TestCheckResourceAttr("billingbox_role.test", "name", "test-role-custom"),
 					resource.TestCheckResourceAttr("billingbox_role.test", "resource_type", "Role"),
+					resource.TestCheckResourceAttr("billingbox_role.test", "user.id", "test-user"),
 				),
 			},
 			// ImportState testing
@@ -45,6 +47,7 @@ func TestAccRoleResource(t *testing.T) {
 					resource.TestCheckResourceAttr("billingbox_role.test", "id", "custom-id-123"),
 					resource.TestCheckResourceAttr("billingbox_role.test", "name", "test-role-updated"),
 					resource.TestCheckResourceAttr("billingbox_role.test", "resource_type", "Role"),
+					resource.TestCheckResourceAttr("billingbox_role.test", "user.id", "test-user"),
 				),
 			},
 			// Test not-found error handling
@@ -68,6 +71,7 @@ func TestAccRoleResource(t *testing.T) {
 					resource.TestCheckResourceAttr("billingbox_role.test", "name", "test-role-updated"),
 					resource.TestCheckResourceAttr("billingbox_role.test", "resource_type", "Role"),
 					resource.TestCheckResourceAttrSet("billingbox_role.test", "id"),
+					resource.TestCheckResourceAttr("billingbox_role.test", "user.id", "test-user"),
 				),
 			},
 			// Destroy testing
@@ -81,11 +85,6 @@ func TestAccRoleResource(t *testing.T) {
 }
 
 func testAccRoleResourceConfig(name, customID string) string {
-	idConfig := ""
-	if customID != "" {
-		idConfig = fmt.Sprintf(`  id   = %q`, customID)
-	}
-
 	return fmt.Sprintf(`
 provider "billingbox" {
   url           = %[1]q
@@ -94,11 +93,11 @@ provider "billingbox" {
 }
 
 resource "billingbox_role" "test" {
-%[4]s
+  id   = %[4]q
   name = %[5]q
   user = {
     id = "test-user"
   }
 }
-`, os.Getenv("AIDBOX_URL"), os.Getenv("AIDBOX_CLIENT_ID"), os.Getenv("AIDBOX_CLIENT_SECRET"), idConfig, name)
+`, os.Getenv("AIDBOX_URL"), os.Getenv("AIDBOX_CLIENT_ID"), os.Getenv("AIDBOX_CLIENT_SECRET"), customID, name)
 }
