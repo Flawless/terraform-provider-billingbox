@@ -5,7 +5,9 @@
         "INTEGRATION_TESTS": "true",
         "AIDBOX_URL": "http://localhost:8080",
         "AIDBOX_CLIENT_ID": "client",
-        "AIDBOX_CLIENT_SECRET": "secret"
+        "AIDBOX_CLIENT_SECRET": "secret",
+        "AIDBOX_USERNAME": "admin",
+        "AIDBOX_PASSWORD": "password"
     },
     "go.testFlags": [
         "-v"

@@ -19,41 +19,9 @@ import (
 	"terraform-provider-billingbox/internal/client"
 )
 
-// Custom validator for matcho attribute.
-type matchoValidator struct{}
-
-func (v matchoValidator) Description(ctx context.Context) string {
-	return "Matcho is required when engine is set to 'matcho'"
-}
-
-func (v matchoValidator) MarkdownDescription(ctx context.Context) string {
-	return "Matcho is required when engine is set to 'matcho'"
-}
-
-func (v matchoValidator) ValidateDynamic(ctx context.Context, req validator.DynamicRequest, resp *validator.DynamicResponse) {
-	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
-		// Get the engine value
-		var engineVal types.String
-		diags := req.Config.GetAttribute(ctx, path.Root("engine"), &engineVal)
-		resp.Diagnostics.Append(diags...)
-		if diags.HasError() {
-			return
-		}
-
-		if engineVal.ValueString() == "matcho" {
-			resp.Diagnostics.AddAttributeError(
-				req.Path,
-				"Missing Required Attribute",
-				"The matcho attribute must be set when engine is 'matcho'",
-			)
-		}
-	}
-}
-
 // Ensure provider defined types fully satisfy framework interfaces.
 var _ resource.Resource = &AccessPolicyResource{}
 var _ resource.ResourceWithImportState = &AccessPolicyResource{}
-var _ validator.Dynamic = matchoValidator{}
 
 func NewAccessPolicyResource() resource.Resource {
 	return &AccessPolicyResource{}
@@ -124,9 +92,6 @@ func (r *AccessPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 			"matcho": schema.DynamicAttribute{
 				Optional:            true,
 				MarkdownDescription: "Match object of the Access Policy. Can contain nested maps with string, number, or boolean values. Only used when engine is set to 'matcho'.",
-				Validators: []validator.Dynamic{
-					matchoValidator{},
-				},
 			},
 			"description": schema.StringAttribute{
 				Optional:            true,
