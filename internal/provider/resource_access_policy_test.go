@@ -165,6 +165,27 @@ func TestAccAccessPolicyResource_RPC(t *testing.T) {
 	})
 }
 
+func TestAccAccessPolicyResource_Link(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAccessPolicyResourceLinkConfig("link-test-role"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("billingbox_access_policy.link_test", "role_name", "link-test-role"),
+					resource.TestCheckResourceAttr("billingbox_access_policy.link_test", "engine", "allow"),
+					resource.TestCheckResourceAttr("billingbox_access_policy.link_test", "link.#", "2"),
+					resource.TestCheckResourceAttr("billingbox_access_policy.link_test", "link.0.resource_type", "User"),
+					resource.TestCheckResourceAttr("billingbox_access_policy.link_test", "link.0.id", "test-user"),
+					resource.TestCheckResourceAttr("billingbox_access_policy.link_test", "link.1.resource_type", "Client"),
+					resource.TestCheckResourceAttr("billingbox_access_policy.link_test", "link.1.id", "test-client"),
+				),
+			},
+		},
+	})
+}
+
 func testAccAccessPolicyResourceConfig(roleName, action, customID string) string {
 	idConfig := ""
 	if customID != "" {
@@ -264,7 +285,7 @@ resource "billingbox_access_policy" "complex_test" {
       engine = "complex"
       or = [
         {
-          engine = "sql"
+          engine = "sql" 
           sql = {
             query = "SELECT false"
           }
@@ -311,6 +332,32 @@ resource "billingbox_access_policy" "rpc_test" {
   role_name = %[1]q
   engine    = "matcho-rpc"
   description = "RPC engine test policy"
+}
+`, roleName, os.Getenv("AIDBOX_URL"), os.Getenv("AIDBOX_CLIENT_ID"), os.Getenv("AIDBOX_CLIENT_SECRET"))
+}
+
+func testAccAccessPolicyResourceLinkConfig(roleName string) string {
+	return fmt.Sprintf(`
+provider "billingbox" {
+  url           = %[2]q
+  client_id     = %[3]q
+  client_secret = %[4]q
+}
+
+resource "billingbox_access_policy" "link_test" {
+  role_name = %[1]q
+  engine    = "allow"
+  description = "Link engine test policy"
+  link = [
+    {
+      resource_type = "User"
+      id = "test-user"
+    },
+    {
+      resource_type = "Client"
+      id = "test-client"
+    }
+  ]
 }
 `, roleName, os.Getenv("AIDBOX_URL"), os.Getenv("AIDBOX_CLIENT_ID"), os.Getenv("AIDBOX_CLIENT_SECRET"))
 }

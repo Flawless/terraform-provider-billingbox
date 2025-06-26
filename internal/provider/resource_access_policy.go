@@ -44,6 +44,7 @@ type AccessPolicyResourceModel struct {
 	And          types.Dynamic `json:"and,omitempty" tfsdk:"and"`
 	Or           types.Dynamic `json:"or,omitempty" tfsdk:"or"`
 	RPC          types.Dynamic `json:"rpc,omitempty" tfsdk:"rpc"`
+	Link         types.List    `json:"link,omitempty" tfsdk:"link"`
 	Meta         types.Object  `json:"meta,omitempty" tfsdk:"meta"`
 	Description  types.String  `json:"description,omitempty" tfsdk:"description"`
 }
@@ -123,6 +124,25 @@ func (r *AccessPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 			"rpc": schema.DynamicAttribute{
 				Optional:            true,
 				MarkdownDescription: "RPC configuration object. Only used when engine is set to 'matcho-rpc' or 'allow-rpc'.",
+			},
+			"link": schema.ListNestedAttribute{
+				Optional:            true,
+				MarkdownDescription: "List of links to Users, Clients, or Operations. If empty, the policy is considered global.",
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"resource_type": schema.StringAttribute{
+							Required:            true,
+							MarkdownDescription: "Type of resource to link to. Must be one of: User, Client, Operation",
+							Validators: []validator.String{
+								stringvalidator.OneOf("User", "Client", "Operation"),
+							},
+						},
+						"id": schema.StringAttribute{
+							Required:            true,
+							MarkdownDescription: "ID of the resource to link to",
+						},
+					},
+				},
 			},
 			"description": schema.StringAttribute{
 				Optional:            true,
@@ -225,6 +245,28 @@ func (r *AccessPolicyResource) Create(ctx context.Context, req resource.CreateRe
 		if objValue, ok := data.RPC.UnderlyingValue().(types.Object); ok {
 			accessPolicy.RPC = convertObjectToMap(objValue)
 		}
+	}
+
+	if !data.Link.IsNull() && !data.Link.IsUnknown() {
+		linkElements := make([]client.AccessPolicyLink, 0)
+		for _, elem := range data.Link.Elements() {
+			if objValue, ok := elem.(types.Object); ok {
+				linkAttrs := objValue.Attributes()
+				var link client.AccessPolicyLink
+				if resourceTypeVal, ok := linkAttrs["resource_type"]; ok {
+					if resourceTypeStr, ok := resourceTypeVal.(types.String); ok {
+						link.ResourceType = resourceTypeStr.ValueString()
+					}
+				}
+				if idVal, ok := linkAttrs["id"]; ok {
+					if idStr, ok := idVal.(types.String); ok {
+						link.ID = idStr.ValueString()
+					}
+				}
+				linkElements = append(linkElements, link)
+			}
+		}
+		accessPolicy.Link = linkElements
 	}
 
 	// Create the access policy
@@ -409,6 +451,41 @@ func (r *AccessPolicyResource) Read(ctx context.Context, req resource.ReadReques
 		}
 	}
 
+	if link, ok := policy["link"]; ok {
+		if linkArray, ok := link.([]interface{}); ok {
+			linkElements := make([]attr.Value, 0, len(linkArray))
+			for _, item := range linkArray {
+				if itemMap, ok := item.(map[string]interface{}); ok {
+					linkValues := map[string]attr.Value{}
+					if resourceType, ok := itemMap["resourceType"].(string); ok {
+						linkValues["resource_type"] = types.StringValue(resourceType)
+					}
+					if id, ok := itemMap["id"].(string); ok {
+						linkValues["id"] = types.StringValue(id)
+					}
+					linkTypes := map[string]attr.Type{
+						"resource_type": types.StringType,
+						"id":            types.StringType,
+					}
+					linkObj, diags := types.ObjectValue(linkTypes, linkValues)
+					if !diags.HasError() {
+						linkElements = append(linkElements, linkObj)
+					}
+				}
+			}
+			linkElementType := types.ObjectType{
+				AttrTypes: map[string]attr.Type{
+					"resource_type": types.StringType,
+					"id":            types.StringType,
+				},
+			}
+			linkList, diags := types.ListValue(linkElementType, linkElements)
+			if !diags.HasError() {
+				data.Link = linkList
+			}
+		}
+	}
+
 	if meta, ok := policy["meta"].(map[string]interface{}); ok {
 		metaValues := map[string]attr.Value{}
 		if versionID, ok := meta["versionId"].(string); ok {
@@ -500,6 +577,28 @@ func (r *AccessPolicyResource) Update(ctx context.Context, req resource.UpdateRe
 		if objValue, ok := data.RPC.UnderlyingValue().(types.Object); ok {
 			accessPolicy.RPC = convertObjectToMap(objValue)
 		}
+	}
+
+	if !data.Link.IsNull() && !data.Link.IsUnknown() {
+		linkElements := make([]client.AccessPolicyLink, 0)
+		for _, elem := range data.Link.Elements() {
+			if objValue, ok := elem.(types.Object); ok {
+				linkAttrs := objValue.Attributes()
+				var link client.AccessPolicyLink
+				if resourceTypeVal, ok := linkAttrs["resource_type"]; ok {
+					if resourceTypeStr, ok := resourceTypeVal.(types.String); ok {
+						link.ResourceType = resourceTypeStr.ValueString()
+					}
+				}
+				if idVal, ok := linkAttrs["id"]; ok {
+					if idStr, ok := idVal.(types.String); ok {
+						link.ID = idStr.ValueString()
+					}
+				}
+				linkElements = append(linkElements, link)
+			}
+		}
+		accessPolicy.Link = linkElements
 	}
 
 	// Update the access policy
