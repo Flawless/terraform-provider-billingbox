@@ -588,7 +588,7 @@ func convertObjectToMap(obj types.Object) map[string]interface{} {
 	return result
 }
 
-// Helper function to convert a map[string]interface{} to a types.Object
+// Helper function to convert a map[string]interface{} to a types.Object.
 func convertMapToObject(m map[string]interface{}) types.Object {
 	attrValues := make(map[string]attr.Value)
 	attrTypes := make(map[string]attr.Type)

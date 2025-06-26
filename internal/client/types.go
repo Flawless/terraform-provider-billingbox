@@ -55,7 +55,7 @@ type AccessPolicy struct {
 	RPC         interface{}   `json:"rpc,omitempty"`
 }
 
-// SQLConfig represents the SQL engine configuration
+// SQLConfig represents the SQL engine configuration.
 type SQLConfig struct {
 	Query string `json:"query"`
 }
