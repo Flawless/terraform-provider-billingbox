@@ -84,6 +84,87 @@ func TestAccAccessPolicyResource(t *testing.T) {
 	})
 }
 
+func TestAccAccessPolicyResource_SQL(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAccessPolicyResourceSQLConfig("sql-test-role"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("billingbox_access_policy.sql_test", "role_name", "sql-test-role"),
+					resource.TestCheckResourceAttr("billingbox_access_policy.sql_test", "engine", "sql"),
+					resource.TestCheckResourceAttr("billingbox_access_policy.sql_test", "sql.query", "SELECT true FROM patient WHERE id = {{jwt.patient_id}} LIMIT 1;"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccAccessPolicyResource_JSONSchema(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAccessPolicyResourceJSONSchemaConfig("json-schema-test-role"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("billingbox_access_policy.json_schema_test", "role_name", "json-schema-test-role"),
+					resource.TestCheckResourceAttr("billingbox_access_policy.json_schema_test", "engine", "json-schema"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccAccessPolicyResource_Complex(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAccessPolicyResourceComplexConfig("complex-test-role"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("billingbox_access_policy.complex_test", "role_name", "complex-test-role"),
+					resource.TestCheckResourceAttr("billingbox_access_policy.complex_test", "engine", "complex"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccAccessPolicyResource_Allow(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAccessPolicyResourceAllowConfig("allow-test-role"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("billingbox_access_policy.allow_test", "role_name", "allow-test-role"),
+					resource.TestCheckResourceAttr("billingbox_access_policy.allow_test", "engine", "allow"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccAccessPolicyResource_RPC(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAccessPolicyResourceRPCConfig("rpc-test-role"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("billingbox_access_policy.rpc_test", "role_name", "rpc-test-role"),
+					resource.TestCheckResourceAttr("billingbox_access_policy.rpc_test", "engine", "matcho-rpc"),
+				),
+			},
+		},
+	})
+}
+
 func testAccAccessPolicyResourceConfig(roleName, action, customID string) string {
 	idConfig := ""
 	if customID != "" {
@@ -108,4 +189,128 @@ resource "billingbox_access_policy" "test" {
   }
 }
 `, roleName, action, os.Getenv("AIDBOX_URL"), os.Getenv("AIDBOX_CLIENT_ID"), os.Getenv("AIDBOX_CLIENT_SECRET"), idConfig)
+}
+
+func testAccAccessPolicyResourceSQLConfig(roleName string) string {
+	return fmt.Sprintf(`
+provider "billingbox" {
+  url           = %[2]q
+  client_id     = %[3]q
+  client_secret = %[4]q
+}
+
+resource "billingbox_access_policy" "sql_test" {
+  role_name = %[1]q
+  engine    = "sql"
+  sql = {
+    query = "SELECT true FROM patient WHERE id = {{jwt.patient_id}} LIMIT 1;"
+  }
+  description = "SQL engine test policy"
+}
+`, roleName, os.Getenv("AIDBOX_URL"), os.Getenv("AIDBOX_CLIENT_ID"), os.Getenv("AIDBOX_CLIENT_SECRET"))
+}
+
+func testAccAccessPolicyResourceJSONSchemaConfig(roleName string) string {
+	return fmt.Sprintf(`
+provider "billingbox" {
+  url           = %[2]q
+  client_id     = %[3]q
+  client_secret = %[4]q
+}
+
+resource "billingbox_access_policy" "json_schema_test" {
+  role_name = %[1]q
+  engine    = "json-schema"
+  schema = {
+    type = "object"
+    required = ["user"]
+    properties = {
+      user = {
+        type = "object"
+        required = ["data"]
+        properties = {
+          data = {
+            type = "object"
+            required = ["practitioner_id"]
+          }
+        }
+      }
+    }
+  }
+  description = "JSON Schema engine test policy"
+}
+`, roleName, os.Getenv("AIDBOX_URL"), os.Getenv("AIDBOX_CLIENT_ID"), os.Getenv("AIDBOX_CLIENT_SECRET"))
+}
+
+func testAccAccessPolicyResourceComplexConfig(roleName string) string {
+	return fmt.Sprintf(`
+provider "billingbox" {
+  url           = %[2]q
+  client_id     = %[3]q
+  client_secret = %[4]q
+}
+
+resource "billingbox_access_policy" "complex_test" {
+  role_name = %[1]q
+  engine    = "complex"
+  and = [
+    {
+      engine = "sql"
+      sql = {
+        query = "SELECT true"
+      }
+    },
+    {
+      engine = "complex"
+      or = [
+        {
+          engine = "sql"
+          sql = {
+            query = "SELECT false"
+          }
+        },
+        {
+          engine = "sql"
+          sql = {
+            query = "SELECT true"
+          }
+        }
+      ]
+    }
+  ]
+  description = "Complex engine test policy with AND/OR logic"
+}
+`, roleName, os.Getenv("AIDBOX_URL"), os.Getenv("AIDBOX_CLIENT_ID"), os.Getenv("AIDBOX_CLIENT_SECRET"))
+}
+
+func testAccAccessPolicyResourceAllowConfig(roleName string) string {
+	return fmt.Sprintf(`
+provider "billingbox" {
+  url           = %[2]q
+  client_id     = %[3]q
+  client_secret = %[4]q
+}
+
+resource "billingbox_access_policy" "allow_test" {
+  role_name = %[1]q
+  engine    = "allow"
+  description = "Allow engine test policy - grants unrestricted access"
+}
+`, roleName, os.Getenv("AIDBOX_URL"), os.Getenv("AIDBOX_CLIENT_ID"), os.Getenv("AIDBOX_CLIENT_SECRET"))
+}
+
+func testAccAccessPolicyResourceRPCConfig(roleName string) string {
+	return fmt.Sprintf(`
+provider "billingbox" {
+  url           = %[2]q
+  client_id     = %[3]q
+  client_secret = %[4]q
+}
+
+resource "billingbox_access_policy" "rpc_test" {
+  role_name = %[1]q
+  engine    = "matcho-rpc"
+  description = "RPC engine test policy"
+}
+`, roleName, os.Getenv("AIDBOX_URL"), os.Getenv("AIDBOX_CLIENT_ID"), os.Getenv("AIDBOX_CLIENT_SECRET"))
 }

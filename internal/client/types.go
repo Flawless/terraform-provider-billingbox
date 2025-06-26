@@ -44,8 +44,18 @@ type Role struct {
 // AccessPolicy represents an access policy resource.
 type AccessPolicy struct {
 	Resource
-	RoleName    string      `json:"roleName,omitempty"`
-	Engine      string      `json:"engine,omitempty"`
-	Matcho      interface{} `json:"matcho,omitempty"`
-	Description string      `json:"description,omitempty"`
+	RoleName    string        `json:"roleName,omitempty"`
+	Engine      string        `json:"engine,omitempty"`
+	Matcho      interface{}   `json:"matcho,omitempty"`
+	Description string        `json:"description,omitempty"`
+	SQL         *SQLConfig    `json:"sql,omitempty"`
+	Schema      interface{}   `json:"schema,omitempty"`
+	And         []interface{} `json:"and,omitempty"`
+	Or          []interface{} `json:"or,omitempty"`
+	RPC         interface{}   `json:"rpc,omitempty"`
+}
+
+// SQLConfig represents the SQL engine configuration
+type SQLConfig struct {
+	Query string `json:"query"`
 }

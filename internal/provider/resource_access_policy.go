@@ -39,6 +39,11 @@ type AccessPolicyResourceModel struct {
 	RoleName     types.String  `json:"roleName,omitempty" tfsdk:"role_name"`
 	Engine       types.String  `json:"engine,omitempty" tfsdk:"engine"`
 	Matcho       types.Dynamic `json:"matcho,omitempty" tfsdk:"matcho"`
+	SQL          types.Object  `json:"sql,omitempty" tfsdk:"sql"`
+	Schema       types.Dynamic `json:"schema,omitempty" tfsdk:"schema"`
+	And          types.List    `json:"and,omitempty" tfsdk:"and"`
+	Or           types.List    `json:"or,omitempty" tfsdk:"or"`
+	RPC          types.Dynamic `json:"rpc,omitempty" tfsdk:"rpc"`
 	Meta         types.Object  `json:"meta,omitempty" tfsdk:"meta"`
 	Description  types.String  `json:"description,omitempty" tfsdk:"description"`
 }
@@ -93,6 +98,34 @@ func (r *AccessPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 				Optional:            true,
 				MarkdownDescription: "Match object of the Access Policy. Can contain nested maps with string, number, or boolean values. Only used when engine is set to 'matcho'.",
 			},
+			"sql": schema.SingleNestedAttribute{
+				Optional:            true,
+				MarkdownDescription: "SQL configuration for the Access Policy. Only used when engine is set to 'sql'.",
+				Attributes: map[string]schema.Attribute{
+					"query": schema.StringAttribute{
+						Required:            true,
+						MarkdownDescription: "SQL query to execute. Should return a single row with one column containing a boolean result.",
+					},
+				},
+			},
+			"schema": schema.DynamicAttribute{
+				Optional:            true,
+				MarkdownDescription: "JSON Schema object for validation. Only used when engine is set to 'json-schema'.",
+			},
+			"and": schema.ListAttribute{
+				ElementType:         types.DynamicType,
+				Optional:            true,
+				MarkdownDescription: "Array of engine rules that must all be satisfied (AND logic). Only used when engine is set to 'complex'. Cannot be used together with 'or'.",
+			},
+			"or": schema.ListAttribute{
+				ElementType:         types.DynamicType,
+				Optional:            true,
+				MarkdownDescription: "Array of engine rules where at least one must be satisfied (OR logic). Only used when engine is set to 'complex'. Cannot be used together with 'and'.",
+			},
+			"rpc": schema.DynamicAttribute{
+				Optional:            true,
+				MarkdownDescription: "RPC configuration object. Only used when engine is set to 'matcho-rpc' or 'allow-rpc'.",
+			},
 			"description": schema.StringAttribute{
 				Optional:            true,
 				MarkdownDescription: "Description of the Access Policy",
@@ -142,6 +175,53 @@ func (r *AccessPolicyResource) Create(ctx context.Context, req resource.CreateRe
 	if !data.Matcho.IsNull() && !data.Matcho.IsUnknown() {
 		if objValue, ok := data.Matcho.UnderlyingValue().(types.Object); ok {
 			accessPolicy.Matcho = convertObjectToMap(objValue)
+		}
+	}
+
+	if !data.SQL.IsNull() && !data.SQL.IsUnknown() {
+		sqlAttrs := data.SQL.Attributes()
+		if queryVal, ok := sqlAttrs["query"]; ok {
+			if queryStr, ok := queryVal.(types.String); ok {
+				accessPolicy.SQL = &client.SQLConfig{
+					Query: queryStr.ValueString(),
+				}
+			}
+		}
+	}
+
+	if !data.Schema.IsNull() && !data.Schema.IsUnknown() {
+		if objValue, ok := data.Schema.UnderlyingValue().(types.Object); ok {
+			accessPolicy.Schema = convertObjectToMap(objValue)
+		}
+	}
+
+	if !data.And.IsNull() && !data.And.IsUnknown() {
+		andElements := make([]interface{}, 0)
+		for _, elem := range data.And.Elements() {
+			if objValue, ok := elem.(types.Dynamic); ok {
+				if underlyingObj, ok := objValue.UnderlyingValue().(types.Object); ok {
+					andElements = append(andElements, convertObjectToMap(underlyingObj))
+				}
+			}
+		}
+		accessPolicy.And = andElements
+	}
+
+	if !data.Or.IsNull() && !data.Or.IsUnknown() {
+		orElements := make([]interface{}, 0)
+		for _, elem := range data.Or.Elements() {
+			if objValue, ok := elem.(types.Dynamic); ok {
+				if underlyingObj, ok := objValue.UnderlyingValue().(types.Object); ok {
+					orElements = append(orElements, convertObjectToMap(underlyingObj))
+				}
+			}
+		}
+		accessPolicy.Or = orElements
+	}
+
+	if !data.RPC.IsNull() && !data.RPC.IsUnknown() {
+		if objValue, ok := data.RPC.UnderlyingValue().(types.Object); ok {
+			accessPolicy.RPC = convertObjectToMap(objValue)
 		}
 	}
 
@@ -265,6 +345,68 @@ func (r *AccessPolicyResource) Read(ctx context.Context, req resource.ReadReques
 		}
 	}
 
+	if sql, ok := policy["sql"]; ok {
+		if sqlMap, ok := sql.(map[string]interface{}); ok {
+			sqlValues := map[string]attr.Value{}
+			if query, ok := sqlMap["query"].(string); ok {
+				sqlValues["query"] = types.StringValue(query)
+			}
+			sqlTypes := map[string]attr.Type{
+				"query": types.StringType,
+			}
+			sqlObj, diags := types.ObjectValue(sqlTypes, sqlValues)
+			if !diags.HasError() {
+				data.SQL = sqlObj
+			}
+		}
+	}
+
+	if schema, ok := policy["schema"]; ok {
+		if schemaMap, ok := schema.(map[string]interface{}); ok {
+			objValue := convertMapToObject(schemaMap)
+			data.Schema = types.DynamicValue(objValue)
+		}
+	}
+
+	if and, ok := policy["and"]; ok {
+		if andArray, ok := and.([]interface{}); ok {
+			andElements := make([]attr.Value, 0, len(andArray))
+			for _, item := range andArray {
+				if itemMap, ok := item.(map[string]interface{}); ok {
+					objValue := convertMapToObject(itemMap)
+					andElements = append(andElements, types.DynamicValue(objValue))
+				}
+			}
+			andList, diags := types.ListValue(types.DynamicType, andElements)
+			if !diags.HasError() {
+				data.And = andList
+			}
+		}
+	}
+
+	if or, ok := policy["or"]; ok {
+		if orArray, ok := or.([]interface{}); ok {
+			orElements := make([]attr.Value, 0, len(orArray))
+			for _, item := range orArray {
+				if itemMap, ok := item.(map[string]interface{}); ok {
+					objValue := convertMapToObject(itemMap)
+					orElements = append(orElements, types.DynamicValue(objValue))
+				}
+			}
+			orList, diags := types.ListValue(types.DynamicType, orElements)
+			if !diags.HasError() {
+				data.Or = orList
+			}
+		}
+	}
+
+	if rpc, ok := policy["rpc"]; ok {
+		if rpcMap, ok := rpc.(map[string]interface{}); ok {
+			objValue := convertMapToObject(rpcMap)
+			data.RPC = types.DynamicValue(objValue)
+		}
+	}
+
 	if meta, ok := policy["meta"].(map[string]interface{}); ok {
 		metaValues := map[string]attr.Value{}
 		if versionID, ok := meta["versionId"].(string); ok {
@@ -305,6 +447,53 @@ func (r *AccessPolicyResource) Update(ctx context.Context, req resource.UpdateRe
 
 	if obj, ok := data.Matcho.UnderlyingValue().(types.Object); ok {
 		accessPolicy.Matcho = convertObjectToMap(obj)
+	}
+
+	if !data.SQL.IsNull() && !data.SQL.IsUnknown() {
+		sqlAttrs := data.SQL.Attributes()
+		if queryVal, ok := sqlAttrs["query"]; ok {
+			if queryStr, ok := queryVal.(types.String); ok {
+				accessPolicy.SQL = &client.SQLConfig{
+					Query: queryStr.ValueString(),
+				}
+			}
+		}
+	}
+
+	if !data.Schema.IsNull() && !data.Schema.IsUnknown() {
+		if objValue, ok := data.Schema.UnderlyingValue().(types.Object); ok {
+			accessPolicy.Schema = convertObjectToMap(objValue)
+		}
+	}
+
+	if !data.And.IsNull() && !data.And.IsUnknown() {
+		andElements := make([]interface{}, 0)
+		for _, elem := range data.And.Elements() {
+			if objValue, ok := elem.(types.Dynamic); ok {
+				if underlyingObj, ok := objValue.UnderlyingValue().(types.Object); ok {
+					andElements = append(andElements, convertObjectToMap(underlyingObj))
+				}
+			}
+		}
+		accessPolicy.And = andElements
+	}
+
+	if !data.Or.IsNull() && !data.Or.IsUnknown() {
+		orElements := make([]interface{}, 0)
+		for _, elem := range data.Or.Elements() {
+			if objValue, ok := elem.(types.Dynamic); ok {
+				if underlyingObj, ok := objValue.UnderlyingValue().(types.Object); ok {
+					orElements = append(orElements, convertObjectToMap(underlyingObj))
+				}
+			}
+		}
+		accessPolicy.Or = orElements
+	}
+
+	if !data.RPC.IsNull() && !data.RPC.IsUnknown() {
+		if objValue, ok := data.RPC.UnderlyingValue().(types.Object); ok {
+			accessPolicy.RPC = convertObjectToMap(objValue)
+		}
 	}
 
 	// Update the access policy
@@ -397,4 +586,60 @@ func convertObjectToMap(obj types.Object) map[string]interface{} {
 		}
 	}
 	return result
+}
+
+// Helper function to convert a map[string]interface{} to a types.Object
+func convertMapToObject(m map[string]interface{}) types.Object {
+	attrValues := make(map[string]attr.Value)
+	attrTypes := make(map[string]attr.Type)
+
+	for k, v := range m {
+		if v == nil {
+			continue
+		}
+		switch val := v.(type) {
+		case string:
+			attrValues[k] = types.StringValue(val)
+			attrTypes[k] = types.StringType
+		case float64:
+			attrValues[k] = types.NumberValue(big.NewFloat(val))
+			attrTypes[k] = types.NumberType
+		case bool:
+			attrValues[k] = types.BoolValue(val)
+			attrTypes[k] = types.BoolType
+		case map[string]interface{}:
+			nestedObj := convertMapToObject(val)
+			attrValues[k] = nestedObj
+			attrTypes[k] = nestedObj.Type(context.Background())
+		case []interface{}:
+			// Handle arrays
+			listElements := make([]attr.Value, 0, len(val))
+			var elementType attr.Type = types.StringType // default
+			for _, item := range val {
+				switch itemVal := item.(type) {
+				case string:
+					listElements = append(listElements, types.StringValue(itemVal))
+					elementType = types.StringType
+				case float64:
+					listElements = append(listElements, types.NumberValue(big.NewFloat(itemVal)))
+					elementType = types.NumberType
+				case bool:
+					listElements = append(listElements, types.BoolValue(itemVal))
+					elementType = types.BoolType
+				case map[string]interface{}:
+					nestedObj := convertMapToObject(itemVal)
+					listElements = append(listElements, nestedObj)
+					elementType = nestedObj.Type(context.Background())
+				}
+			}
+			if len(listElements) > 0 {
+				listValue, _ := types.ListValue(elementType, listElements)
+				attrValues[k] = listValue
+				attrTypes[k] = types.ListType{ElemType: elementType}
+			}
+		}
+	}
+
+	objValue, _ := types.ObjectValue(attrTypes, attrValues)
+	return objValue
 }
