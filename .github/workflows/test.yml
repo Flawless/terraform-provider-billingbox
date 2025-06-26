@@ -90,7 +90,7 @@ jobs:
           cd test/fixtures/aidbox
           docker compose up -d
           # Wait for services to be healthy
-          docker compose wait
+          docker compose wait aidboxdb aidbox
       - uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b # v5.4.0
         with:
           go-version-file: 'go.mod'
