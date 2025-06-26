@@ -89,6 +89,8 @@ jobs:
         run: |
           cd test/fixtures/aidbox
           docker compose up -d
+          # Wait for services to be healthy
+          docker compose wait
       - uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b # v5.4.0
         with:
           go-version-file: 'go.mod'
@@ -99,9 +101,17 @@ jobs:
           terraform_wrapper: false
       - run: go mod download
       - name: Wait for services
+        timeout-minutes: 10
         run: |
-          until pg_isready -h localhost -p 5432 -U postgres; do sleep 1; done
-          until curl -s http://localhost:8081/health; do sleep 1; done
+          # Wait for PostgreSQL
+          echo "Waiting for PostgreSQL..."
+          timeout 120 bash -c 'until pg_isready -h localhost -p 5432 -U postgres; do echo "Waiting for PostgreSQL..."; sleep 2; done'
+          echo "PostgreSQL is ready"
+          
+          # Wait for Aidbox with timeout
+          echo "Waiting for Aidbox..."
+          timeout 300 bash -c 'until curl -f -s http://localhost:8081/health; do echo "Waiting for Aidbox..."; sleep 5; done'
+          echo "Aidbox is ready"
       - name: Create test user
         run: |
           # Get access token using client credentials
