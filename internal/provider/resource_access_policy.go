@@ -41,8 +41,8 @@ type AccessPolicyResourceModel struct {
 	Matcho       types.Dynamic `json:"matcho,omitempty" tfsdk:"matcho"`
 	SQL          types.Object  `json:"sql,omitempty" tfsdk:"sql"`
 	Schema       types.Dynamic `json:"schema,omitempty" tfsdk:"schema"`
-	And          types.List    `json:"and,omitempty" tfsdk:"and"`
-	Or           types.List    `json:"or,omitempty" tfsdk:"or"`
+	And          types.Dynamic `json:"and,omitempty" tfsdk:"and"`
+	Or           types.Dynamic `json:"or,omitempty" tfsdk:"or"`
 	RPC          types.Dynamic `json:"rpc,omitempty" tfsdk:"rpc"`
 	Meta         types.Object  `json:"meta,omitempty" tfsdk:"meta"`
 	Description  types.String  `json:"description,omitempty" tfsdk:"description"`
@@ -112,13 +112,11 @@ func (r *AccessPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 				Optional:            true,
 				MarkdownDescription: "JSON Schema object for validation. Only used when engine is set to 'json-schema'.",
 			},
-			"and": schema.ListAttribute{
-				ElementType:         types.DynamicType,
+			"and": schema.DynamicAttribute{
 				Optional:            true,
 				MarkdownDescription: "Array of engine rules that must all be satisfied (AND logic). Only used when engine is set to 'complex'. Cannot be used together with 'or'.",
 			},
-			"or": schema.ListAttribute{
-				ElementType:         types.DynamicType,
+			"or": schema.DynamicAttribute{
 				Optional:            true,
 				MarkdownDescription: "Array of engine rules where at least one must be satisfied (OR logic). Only used when engine is set to 'complex'. Cannot be used together with 'and'.",
 			},
@@ -196,27 +194,31 @@ func (r *AccessPolicyResource) Create(ctx context.Context, req resource.CreateRe
 	}
 
 	if !data.And.IsNull() && !data.And.IsUnknown() {
-		andElements := make([]interface{}, 0)
-		for _, elem := range data.And.Elements() {
-			if objValue, ok := elem.(types.Dynamic); ok {
-				if underlyingObj, ok := objValue.UnderlyingValue().(types.Object); ok {
-					andElements = append(andElements, convertObjectToMap(underlyingObj))
+		if listValue, ok := data.And.UnderlyingValue().(types.List); ok {
+			andElements := make([]interface{}, 0)
+			for _, elem := range listValue.Elements() {
+				if objValue, ok := elem.(types.Dynamic); ok {
+					if underlyingObj, ok := objValue.UnderlyingValue().(types.Object); ok {
+						andElements = append(andElements, convertObjectToMap(underlyingObj))
+					}
 				}
 			}
+			accessPolicy.And = andElements
 		}
-		accessPolicy.And = andElements
 	}
 
 	if !data.Or.IsNull() && !data.Or.IsUnknown() {
-		orElements := make([]interface{}, 0)
-		for _, elem := range data.Or.Elements() {
-			if objValue, ok := elem.(types.Dynamic); ok {
-				if underlyingObj, ok := objValue.UnderlyingValue().(types.Object); ok {
-					orElements = append(orElements, convertObjectToMap(underlyingObj))
+		if listValue, ok := data.Or.UnderlyingValue().(types.List); ok {
+			orElements := make([]interface{}, 0)
+			for _, elem := range listValue.Elements() {
+				if objValue, ok := elem.(types.Dynamic); ok {
+					if underlyingObj, ok := objValue.UnderlyingValue().(types.Object); ok {
+						orElements = append(orElements, convertObjectToMap(underlyingObj))
+					}
 				}
 			}
+			accessPolicy.Or = orElements
 		}
-		accessPolicy.Or = orElements
 	}
 
 	if !data.RPC.IsNull() && !data.RPC.IsUnknown() {
@@ -379,7 +381,7 @@ func (r *AccessPolicyResource) Read(ctx context.Context, req resource.ReadReques
 			}
 			andList, diags := types.ListValue(types.DynamicType, andElements)
 			if !diags.HasError() {
-				data.And = andList
+				data.And = types.DynamicValue(andList)
 			}
 		}
 	}
@@ -395,7 +397,7 @@ func (r *AccessPolicyResource) Read(ctx context.Context, req resource.ReadReques
 			}
 			orList, diags := types.ListValue(types.DynamicType, orElements)
 			if !diags.HasError() {
-				data.Or = orList
+				data.Or = types.DynamicValue(orList)
 			}
 		}
 	}
@@ -467,27 +469,31 @@ func (r *AccessPolicyResource) Update(ctx context.Context, req resource.UpdateRe
 	}
 
 	if !data.And.IsNull() && !data.And.IsUnknown() {
-		andElements := make([]interface{}, 0)
-		for _, elem := range data.And.Elements() {
-			if objValue, ok := elem.(types.Dynamic); ok {
-				if underlyingObj, ok := objValue.UnderlyingValue().(types.Object); ok {
-					andElements = append(andElements, convertObjectToMap(underlyingObj))
+		if listValue, ok := data.And.UnderlyingValue().(types.List); ok {
+			andElements := make([]interface{}, 0)
+			for _, elem := range listValue.Elements() {
+				if objValue, ok := elem.(types.Dynamic); ok {
+					if underlyingObj, ok := objValue.UnderlyingValue().(types.Object); ok {
+						andElements = append(andElements, convertObjectToMap(underlyingObj))
+					}
 				}
 			}
+			accessPolicy.And = andElements
 		}
-		accessPolicy.And = andElements
 	}
 
 	if !data.Or.IsNull() && !data.Or.IsUnknown() {
-		orElements := make([]interface{}, 0)
-		for _, elem := range data.Or.Elements() {
-			if objValue, ok := elem.(types.Dynamic); ok {
-				if underlyingObj, ok := objValue.UnderlyingValue().(types.Object); ok {
-					orElements = append(orElements, convertObjectToMap(underlyingObj))
+		if listValue, ok := data.Or.UnderlyingValue().(types.List); ok {
+			orElements := make([]interface{}, 0)
+			for _, elem := range listValue.Elements() {
+				if objValue, ok := elem.(types.Dynamic); ok {
+					if underlyingObj, ok := objValue.UnderlyingValue().(types.Object); ok {
+						orElements = append(orElements, convertObjectToMap(underlyingObj))
+					}
 				}
 			}
+			accessPolicy.Or = orElements
 		}
-		accessPolicy.Or = orElements
 	}
 
 	if !data.RPC.IsNull() && !data.RPC.IsUnknown() {

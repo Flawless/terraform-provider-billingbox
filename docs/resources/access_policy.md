@@ -22,14 +22,27 @@ Access Policy resource
 
 ### Optional
 
+- `and` (Dynamic) Array of engine rules that must all be satisfied (AND logic). Only used when engine is set to 'complex'. Cannot be used together with 'or'.
 - `description` (String) Description of the Access Policy
 - `id` (String) Unique identifier for the Access Policy. If not set, a random ID will be generated.
 - `matcho` (Dynamic) Match object of the Access Policy. Can contain nested maps with string, number, or boolean values. Only used when engine is set to 'matcho'.
+- `or` (Dynamic) Array of engine rules where at least one must be satisfied (OR logic). Only used when engine is set to 'complex'. Cannot be used together with 'and'.
 - `resource_type` (String) Resource type of the Access Policy. Always set to 'AccessPolicy'.
+- `rpc` (Dynamic) RPC configuration object. Only used when engine is set to 'matcho-rpc' or 'allow-rpc'.
+- `schema` (Dynamic) JSON Schema object for validation. Only used when engine is set to 'json-schema'.
+- `sql` (Attributes) SQL configuration for the Access Policy. Only used when engine is set to 'sql'. (see [below for nested schema](#nestedatt--sql))
 
 ### Read-Only
 
 - `meta` (Attributes) Server-side resource metadata (see [below for nested schema](#nestedatt--meta))
+
+<a id="nestedatt--sql"></a>
+### Nested Schema for `sql`
+
+Required:
+
+- `query` (String) SQL query to execute. Should return a single row with one column containing a boolean result.
+
 
 <a id="nestedatt--meta"></a>
 ### Nested Schema for `meta`
